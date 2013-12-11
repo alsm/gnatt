@@ -124,22 +124,37 @@ func NewMessage(msgType MsgType) (m Message) {
 	return
 }
 
+type QoS byte
+
+const (
+	/* These values are specified in MQTT-SN v1.2 Section 5.3.4 */
+	QoS_NegOne QoS = 0x03
+	QoS_Zero   QoS = 0x00
+	QoS_One    QoS = 0x01
+	QoS_Two    QoS = 0x02
+)
+
 type qoS struct {
-	qos int8
+	qos QoS
 }
 
-func (q *qoS) QoS() int8 {
+func (q *qoS) QoS() QoS {
 	return q.qos
 }
 
-func (q *qoS) SetQoS(qos int8) {
-	switch {
-	case (qos < -1):
-		q.qos = -1
-	case (qos > 2):
-		q.qos = 2
+func (q *qoS) SetQoS(qos QoS) {
+	switch qos {
+	case QoS_NegOne:
+		q.qos = QoS_NegOne
+	case QoS_Zero:
+		q.qos = QoS_Zero
+	case QoS_One:
+		q.qos = QoS_One
+	case QoS_Two:
+		q.qos = QoS_Two
 	default:
-		q.qos = qos
+		// User is bad at programming, better be safe
+		q.qos = QoS_Two
 	}
 }
 
@@ -449,14 +464,14 @@ type willTopicMessage struct {
 
 func (w *willTopicMessage) Pack() (msg []byte) {
 	msg = append(msg, w.PackHeader()...)
-	msg = append(msg, w.QoS())
+	msg = append(msg, byte(w.QoS()))
 	msg = append(msg, w.WillTopic()...)
 	return
 }
 
 func (w *willTopicMessage) Unpack(msg []byte) Message {
 	msg = w.UnpackHeader(msg)
-	w.SetQoS(int8(msg[0]))
+	w.SetQoS(QoS(msg[0]))
 	w.SetWillTopic(msg[1:])
 	return w
 }

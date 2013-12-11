@@ -115,270 +115,273 @@ func Test_Length(t *testing.T) {
 
 func Test_NewAdvertiseMessage(t *testing.T) {
 	am := NewMessage(ADVERTISE)
-	switch m := am.(type) {
+	switch am.(type) {
 	case *advertiseMessage:
 
 	default:
-		t.Errorf("msg should be *advertiseMessage, is %s", m)
+		t.Errorf("msg should be *advertiseMessage")
 	}
 }
 
 func Test_NewSearchGwMessage(t *testing.T) {
 	sm := NewMessage(SEARCHGW)
-	switch m := sm.(type) {
+	switch sm.(type) {
 	case *searchgwMessage:
 
 	default:
-		t.Errorf("msg should be *searchgwMessage, is %s", m)
+		t.Errorf("msg should be *searchgwMessage")
 	}
 }
 
 func Test_NewGwInfoMessage(t *testing.T) {
 	gm := NewMessage(GWINFO)
-	switch m := gm.(type) {
+	switch gm.(type) {
 	case *gwInfoMessage:
 
 	default:
-		t.Errorf("msg should be *gwInfoMessage, is %s", m)
+		t.Errorf("msg should be *gwInfoMessage")
 	}
 }
 
 func Test_NewConnectMessage(t *testing.T) {
 	cm := NewMessage(CONNECT)
-	switch m := cm.(type) {
+	switch cm.(type) {
 	case *connectMessage:
 
 	default:
-		t.Errorf("msg should be *connectMessage, is %s", m)
+		t.Errorf("msg should be *connectMessage")
 	}
 }
 
 func Test_NewConnackMessage(t *testing.T) {
 	cm := NewMessage(CONNACK)
-	switch m := cm.(type) {
+	switch cm.(type) {
 	case *connackMessage:
 
 	default:
-		t.Errorf("msg should be *connackMessage, is %s", m)
+		t.Errorf("msg should be *connackMessage")
 	}
 }
 
 func Test_NewWillTopicReqMessage(t *testing.T) {
 	wm := NewMessage(WILLTOPICREQ)
-	switch m := wm.(type) {
+	switch wm.(type) {
 	case *willTopicReqMessage:
 
 	default:
-		t.Errorf("msg should be *willTopicReqMessage, is %s", m)
+		t.Errorf("msg should be *willTopicReqMessage")
 	}
 }
 
 func Test_NewWillTopicMessage(t *testing.T) {
-	wm := NewMessage(WILLTOPIC)
-	switch m := wm.(type) {
+	m := NewMessage(WILLTOPIC)
+	switch wtm := m.(type) {
 	case *willTopicMessage:
+		if wtm.QoS() != QoS_Zero {
+			t.Errorf("default QoS should be QoS_Zero, got %d", wtm.QoS())
+		}
 
 	default:
-		t.Errorf("msg should be *willTopicMessage, is %s", m)
+		t.Errorf("wtm should be *willTopicMessage")
 	}
 }
 
 func Test_NewWillMsgReqMessage(t *testing.T) {
 	wm := NewMessage(WILLMSGREQ)
-	switch m := wm.(type) {
+	switch wm.(type) {
 	case *willMsgReqMessage:
 
 	default:
-		t.Errorf("msg should be *willMsgReqMessage, is %s", m)
+		t.Errorf("msg should be *willMsgReqMessage")
 	}
 }
 
 func Test_NewWillMsgMessage(t *testing.T) {
 	wm := NewMessage(WILLMSG)
-	switch m := wm.(type) {
+	switch wm.(type) {
 	case *willMsgMessage:
 
 	default:
-		t.Errorf("msg should be *willMsgMessage, is %s", m)
+		t.Errorf("msg should be *willMsgMessage")
 	}
 }
 
 func Test_NewRegisterMessage(t *testing.T) {
 	rm := NewMessage(REGISTER)
-	switch m := rm.(type) {
+	switch rm.(type) {
 	case *registerMessage:
 
 	default:
-		t.Errorf("msg should be *registerMessage, is %s", m)
+		t.Errorf("msg should be *registerMessage")
 	}
 }
 
 func Test_NewRegackMessage(t *testing.T) {
 	rm := NewMessage(REGACK)
-	switch m := rm.(type) {
+	switch rm.(type) {
 	case *regackMessage:
 
 	default:
-		t.Errorf("msg should be *regackMessage, is %s", m)
+		t.Errorf("msg should be *regackMessage")
 	}
 }
 
 func Test_NewPublishMessage(t *testing.T) {
 	pm := NewMessage(PUBLISH)
-	switch m := pm.(type) {
+	switch pm.(type) {
 	case *publishMessage:
 
 	default:
-		t.Errorf("msg should be *publishMessage, is %s", m)
+		t.Errorf("msg should be *publishMessage")
 	}
 }
 
 func Test_NewPubackMessage(t *testing.T) {
 	pm := NewMessage(PUBACK)
-	switch m := pm.(type) {
+	switch pm.(type) {
 	case *pubackMessage:
 
 	default:
-		t.Errorf("msg should be *pubackMessage, is %s", m)
+		t.Errorf("msg should be *pubackMessage")
 	}
 }
 
 func Test_NewPubcompMessage(t *testing.T) {
 	pm := NewMessage(PUBCOMP)
-	switch m := pm.(type) {
+	switch pm.(type) {
 	case *pubcompMessage:
 
 	default:
-		t.Errorf("msg should be *pubcompMessage, is %s", m)
+		t.Errorf("msg should be *pubcompMessage")
 	}
 }
 
 func Test_NewPubrecMessage(t *testing.T) {
 	pm := NewMessage(PUBREC)
-	switch m := pm.(type) {
+	switch pm.(type) {
 	case *pubrecMessage:
 
 	default:
-		t.Errorf("msg should be *pubrecMessage, is %s", m)
+		t.Errorf("msg should be *pubrecMessage")
 	}
 }
 
 func Test_NewPubrelMessage(t *testing.T) {
 	pm := NewMessage(PUBREL)
-	switch m := pm.(type) {
+	switch pm.(type) {
 	case *pubrelMessage:
 
 	default:
-		t.Errorf("msg should be *pubrelMessage, is %s", m)
+		t.Errorf("msg should be *pubrelMessage")
 	}
 }
 
 func Test_NewSubscribeMessage(t *testing.T) {
 	sm := NewMessage(SUBSCRIBE)
-	switch m := sm.(type) {
+	switch sm.(type) {
 	case *subscribeMessage:
 
 	default:
-		t.Errorf("msg should be *subscribeMessage, is %s", m)
+		t.Errorf("msg should be *subscribeMessage")
 	}
 }
 
 func Test_NewSubackMessage(t *testing.T) {
 	sm := NewMessage(SUBACK)
-	switch m := sm.(type) {
+	switch sm.(type) {
 	case *subackMessage:
 
 	default:
-		t.Errorf("msg should be *subackMessage, is %s", m)
+		t.Errorf("msg should be *subackMessage")
 	}
 }
 
 func Test_NewUnsubscribeMessage(t *testing.T) {
 	sm := NewMessage(UNSUBSCRIBE)
-	switch m := sm.(type) {
+	switch sm.(type) {
 	case *unsubscribeMessage:
 
 	default:
-		t.Errorf("msg should be *unsubscribeMessage, is %s", m)
+		t.Errorf("msg should be *unsubscribeMessage")
 	}
 }
 
 func Test_NewUnsubackMessage(t *testing.T) {
 	sm := NewMessage(UNSUBACK)
-	switch m := sm.(type) {
+	switch sm.(type) {
 	case *unsubackMessage:
 
 	default:
-		t.Errorf("msg should be *unsubackMessage, is %s", m)
+		t.Errorf("msg should be *unsubackMessage")
 	}
 }
 
 func Test_NewPingreqMessage(t *testing.T) {
 	pm := NewMessage(PINGREQ)
-	switch m := pm.(type) {
+	switch pm.(type) {
 	case *pingreqMessage:
 
 	default:
-		t.Errorf("msg should be *pingreqMessage, is %s", m)
+		t.Errorf("msg should be *pingreqMessage")
 	}
 }
 
 func Test_NewPingrespMessage(t *testing.T) {
 	pm := NewMessage(PINGRESP)
-	switch m := pm.(type) {
+	switch pm.(type) {
 	case *pingrespMessage:
 
 	default:
-		t.Errorf("msg should be *pingrespMessage, is %s", m)
+		t.Errorf("msg should be *pingrespMessage")
 	}
 }
 
 func Test_NewDisconnectMessage(t *testing.T) {
 	dm := NewMessage(DISCONNECT)
-	switch m := dm.(type) {
+	switch dm.(type) {
 	case *disconnectMessage:
 
 	default:
-		t.Errorf("msg should be *disconnectMessage, is %s", m)
+		t.Errorf("msg should be *disconnectMessage")
 	}
 }
 
 func Test_NewWillTopicUpdateMessage(t *testing.T) {
 	wm := NewMessage(WILLTOPICUPD)
-	switch m := wm.(type) {
+	switch wm.(type) {
 	case *willTopicUpdateMessage:
 
 	default:
-		t.Errorf("msg should be *willTopicUpdateMessage, is %s", m)
+		t.Errorf("msg should be *willTopicUpdateMessage")
 	}
 }
 
 func Test_NewWillTopicRespMessage(t *testing.T) {
 	wm := NewMessage(WILLTOPICRESP)
-	switch m := wm.(type) {
+	switch wm.(type) {
 	case *willTopicRespMessage:
 
 	default:
-		t.Errorf("msg should be *willTopicRespMessage, is %s", m)
+		t.Errorf("msg should be *willTopicRespMessage")
 	}
 }
 
 func Test_NewWillMsgUpdateMessage(t *testing.T) {
 	wm := NewMessage(WILLMSGUPD)
-	switch m := wm.(type) {
+	switch wm.(type) {
 	case *willMsgUpdateMessage:
 
 	default:
-		t.Errorf("msg should be *willMsgUpdateMessage, is %s", m)
+		t.Errorf("msg should be *willMsgUpdateMessage")
 	}
 }
 
 func Test_NewWillMsgRespMessage(t *testing.T) {
 	wm := NewMessage(WILLMSGRESP)
-	switch m := wm.(type) {
+	switch wm.(type) {
 	case *willMsgRespMessage:
 
 	default:
-		t.Errorf("msg should be *willMsgRespMessage, is %s", m)
+		t.Errorf("msg should be *willMsgRespMessage")
 	}
 }
