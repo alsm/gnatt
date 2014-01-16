@@ -12,8 +12,10 @@ type aggGate struct {
 	stopsig    chan os.Signal
 }
 
-func NewAggGate(opts *MQTT.ClientOptions, stopsig chan os.Signal) *aggGate {
-	listener := udpListener{}
+func NewAggGate(opts *MQTT.ClientOptions, stopsig chan os.Signal, port int) *aggGate {
+	listener := udpListener{
+		port,
+	}
 	client := MQTT.NewClient(opts)
 	ag := &aggGate{
 		listener,

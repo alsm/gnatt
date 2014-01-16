@@ -6,11 +6,16 @@ import (
 )
 
 type udpListener struct {
+	port int
 }
 
-func (gate *udpListener) listen() {
+func port2str(port int) string {
+	return fmt.Sprintf(":%d", port)
+}
+
+func (udp *udpListener) listen() {
 	buffer := make([]byte, 1024)
-	address, err := net.ResolveUDPAddr("udp", ":16111")
+	address, err := net.ResolveUDPAddr("udp", port2str(udp.port))
 	chkerr(err)
 	socket, err := net.ListenUDP("udp", address)
 	chkerr(err)
