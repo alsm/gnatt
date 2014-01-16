@@ -1,4 +1,4 @@
-package main
+package gateway
 
 type gwStatus byte
 
@@ -9,6 +9,6 @@ const (
 	gw_stopping
 )
 
-type gateway interface {
-	start()
+type Gateway interface {
+	Start()
 }

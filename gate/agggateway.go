@@ -1,4 +1,4 @@
-package main
+package gateway
 
 import (
 	"fmt"
@@ -6,18 +6,18 @@ import (
 	"os"
 )
 
-type aggGate struct {
+type AggGate struct {
 	udpListener
 	mqttclient *MQTT.MqttClient
 	stopsig    chan os.Signal
 }
 
-func NewAggGate(opts *MQTT.ClientOptions, stopsig chan os.Signal, port int) *aggGate {
+func NewAggGate(opts *MQTT.ClientOptions, stopsig chan os.Signal, port int) *AggGate {
 	listener := udpListener{
 		port,
 	}
 	client := MQTT.NewClient(opts)
-	ag := &aggGate{
+	ag := &AggGate{
 		listener,
 		client,
 		stopsig,
@@ -25,7 +25,7 @@ func NewAggGate(opts *MQTT.ClientOptions, stopsig chan os.Signal, port int) *agg
 	return ag
 }
 
-func (ag *aggGate) start() {
+func (ag *AggGate) Start() {
 	go ag.awaitStop()
 	fmt.Println("Aggregating Gateway is starting")
 	ag.mqttclient.Start()
@@ -35,7 +35,7 @@ func (ag *aggGate) start() {
 
 // This does NOT WORK on Windows using Cygwin, however
 // it does work using cmd.exe
-func (ag *aggGate) awaitStop() {
+func (ag *AggGate) awaitStop() {
 	<-ag.stopsig
 	fmt.Println("Aggregating Gateway is stopping")
 

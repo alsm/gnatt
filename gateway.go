@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
+	SN "github.com/alsm/gnatt/gate"
 	"os"
 	"os/signal"
 )
@@ -11,7 +12,7 @@ import (
 func main() {
 	stopsig := registerSignals()
 	aggregating, mqttBroker, port := setup()
-	var gateway gateway
+	var gateway SN.Gateway
 	if aggregating {
 		fmt.Println("GNATT Gateway starting in aggregating mode")
 		gateway = initAggregating(mqttBroker, stopsig, port)
@@ -22,7 +23,7 @@ func main() {
 		//gateway = initTransparent(broker)
 	}
 
-	gateway.start()
+	gateway.Start()
 }
 
 func setup() (bool, string, int) {
@@ -51,10 +52,10 @@ func registerSignals() chan os.Signal {
 	return c
 }
 
-func initAggregating(broker string, stopsig chan os.Signal, port int) *aggGate {
+func initAggregating(broker string, stopsig chan os.Signal, port int) *SN.AggGate {
 	opts := MQTT.NewClientOptions()
 	opts.SetBroker(broker)
-	ag := NewAggGate(opts, stopsig, port)
+	ag := SN.NewAggGate(opts, stopsig, port)
 	return ag
 }
 

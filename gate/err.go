@@ -1,4 +1,4 @@
-package main
+package gateway
 
 func chkerr(e error) {
 	if e != nil {
