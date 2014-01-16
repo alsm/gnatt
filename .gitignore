@@ -1,1 +1,4 @@
+*.exe
+*/*.exe
 gateway/gateway
+
