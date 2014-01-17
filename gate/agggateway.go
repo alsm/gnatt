@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"fmt"
+	"time"
 	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
 	"os"
 )
@@ -43,7 +44,8 @@ func (ag *AggGate) Start() {
 func (ag *AggGate) awaitStop() {
 	<-ag.stopsig
 	fmt.Println("Aggregating Gateway is stopping")
-	ag.mqttclient.Disconnect(1000)
+	ag.mqttclient.Disconnect(500)
+	time.Sleep(500) //give broker some time to process DISCONNECT
 	fmt.Println("Aggregating Gateway is stopped")
 
 	// TODO: cleanly close down other goroutines
