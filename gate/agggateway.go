@@ -28,7 +28,12 @@ func NewAggGate(opts *MQTT.ClientOptions, stopsig chan os.Signal, port int) *Agg
 func (ag *AggGate) Start() {
 	go ag.awaitStop()
 	fmt.Println("Aggregating Gateway is starting")
-	ag.mqttclient.Start()
+	_, err := ag.mqttclient.Start()
+	if err != nil {
+		fmt.Println("Aggregating Gateway failed to start")
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	fmt.Println("Aggregating Gateway is started")
 	ag.listen()
 }
@@ -38,7 +43,7 @@ func (ag *AggGate) Start() {
 func (ag *AggGate) awaitStop() {
 	<-ag.stopsig
 	fmt.Println("Aggregating Gateway is stopping")
-
+	ag.mqttclient.Disconnect(1000)
 	fmt.Println("Aggregating Gateway is stopped")
 
 	// TODO: cleanly close down other goroutines
