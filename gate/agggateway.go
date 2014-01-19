@@ -2,9 +2,9 @@ package gateway
 
 import (
 	"fmt"
-	"time"
 	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
 	"os"
+	"time"
 )
 
 type AggGate struct {
