@@ -927,3 +927,63 @@ const (
 	/* 0xFE - Encapsulated message */
 	/* 0xFF is reserved */
 )
+
+func (mtype MsgType) String() string {
+	switch mtype {
+	case ADVERTISE:
+		return "ADVERTISE"
+	case SEARCHGW:
+		return "SEARCHGW"
+	case GWINFO:
+		return "GWINFO"
+	case CONNECT:
+		return "CONNECT"
+	case CONNACK:
+		return "CONNACK"
+	case WILLTOPICREQ:
+		return "WILLTOPICREQ"
+	case WILLTOPIC:
+		return "WILLTOPIC"
+	case WILLMSGREQ:
+		return "WILLMSGREQ"
+	case WILLMSG:
+		return "WILLMSG"
+	case REGISTER:
+		return "REGISTER"
+	case REGACK:
+		return "REGACK"
+	case PUBLISH:
+		return "PUBLISH"
+	case PUBACK:
+		return "PUBACK"
+	case PUBCOMP:
+		return "PUBCOMP"
+	case PUBREC:
+		return "PUBREC"
+	case PUBREL:
+		return "PUBREL"
+	case SUBSCRIBE:
+		return "SUBSCRIBE"
+	case SUBACK:
+		return "SUBACK"
+	case UNSUBSCRIBE:
+		return "UNSUBSCRIBE"
+	case UNSUBACK:
+		return "UNSUBACK"
+	case PINGREQ:
+		return "PINGREQ"
+	case PINGRESP:
+		return "PINGRESP"
+	case DISCONNECT:
+		return "DISCONNECT"
+	case WILLTOPICUPD:
+		return "WILLTOPICUPD"
+	case WILLTOPICRESP:
+		return "WILLTOPICRESP"
+	case WILLMSGUPD:
+		return "WILLMSGUPD"
+	case WILLMSGRESP:
+		return "WILLMSGRESP"
+	}
+	return "INVALID"
+}

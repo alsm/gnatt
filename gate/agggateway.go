@@ -59,7 +59,7 @@ func (ag *AggGate) OnPacket(nbytes int, buffer []byte, remote *net.UDPAddr) {
 	h.UnpackHeader(buffer)
 
 	fmt.Printf("h.Length: %d\n", h.Length())
-	fmt.Printf("h.msgType: %d\n", h.MsgType())
+	fmt.Printf("h.msgType: %s\n", h.MsgType())
 }
 
 func (ag *AggGate) Port() int {
