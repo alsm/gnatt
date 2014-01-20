@@ -3,25 +3,24 @@ package gateway
 import (
 	"fmt"
 	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
+	. "github.com/alsm/gnatt/common/protocol"
+	"net"
 	"os"
 	"time"
 )
 
 type AggGate struct {
-	udpListener
 	mqttclient *MQTT.MqttClient
 	stopsig    chan os.Signal
+	port       int
 }
 
 func NewAggGate(opts *MQTT.ClientOptions, stopsig chan os.Signal, port int) *AggGate {
-	listener := udpListener{
-		port,
-	}
 	client := MQTT.NewClient(opts)
 	ag := &AggGate{
-		listener,
 		client,
 		stopsig,
+		port,
 	}
 	return ag
 }
@@ -36,7 +35,7 @@ func (ag *AggGate) Start() {
 		os.Exit(1)
 	}
 	fmt.Println("Aggregating Gateway is started")
-	ag.listen()
+	listen(ag)
 }
 
 // This does NOT WORK on Windows using Cygwin, however
@@ -51,4 +50,18 @@ func (ag *AggGate) awaitStop() {
 	// TODO: cleanly close down other goroutines
 
 	os.Exit(0)
+}
+
+func (ag *AggGate) OnPacket(nbytes int, buffer []byte, remote *net.UDPAddr) {
+	fmt.Println("OnPacket!")
+
+	var h Header
+	h.UnpackHeader(buffer)
+
+	fmt.Printf("h.Length: %d\n", h.Length())
+	fmt.Printf("h.msgType: %d\n", h.MsgType())
+}
+
+func (ag *AggGate) Port() int {
+	return ag.port
 }

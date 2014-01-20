@@ -2,6 +2,8 @@ package gnatt
 
 import (
 	"encoding/binary"
+	"fmt"
+	"github.com/alsm/gnatt/common/utils"
 )
 
 func encodeUint16(num uint16) []byte {
@@ -34,6 +36,11 @@ func (h *Header) Length() (length int) {
 	} else {
 		length = int(h.length[0])
 	}
+	return
+}
+
+func (h *Header) MsgType() (m MsgType) {
+	m = h.msgType
 	return
 }
 
@@ -309,6 +316,10 @@ func (c *clientId) SetClientId(clientId []byte) {
 	c.clientId = clientId
 }
 
+/*************
+ * Advertise *
+ *************/
+
 type advertiseMessage struct {
 	Header
 	gwId
@@ -328,6 +339,10 @@ func (a *advertiseMessage) Unpack(msg []byte) Message {
 	a.SetDuration(binary.BigEndian.Uint16(msg[1:3]))
 	return a
 }
+
+/*************
+ * Search GW *
+ *************/
 
 type searchgwMessage struct {
 	Header
@@ -353,6 +368,10 @@ func (s *searchgwMessage) Unpack(msg []byte) Message {
 	s.SetRadius(msg[0])
 	return Message(s)
 }
+
+/***********
+ * GW Info *
+ ***********/
 
 type gwInfoMessage struct {
 	Header
@@ -381,6 +400,10 @@ func (g *gwInfoMessage) Unpack(msg []byte) Message {
 	g.SetGwAddress(msg[1:])
 	return Message(g)
 }
+
+/***********
+ * Connect *
+ ***********/
 
 type connectMessage struct {
 	Header
@@ -423,8 +446,15 @@ func (c *connectMessage) Pack() []byte {
 }
 
 func (c *connectMessage) Unpack(msg []byte) Message {
-	return Message(c)
+	fmt.Printf("a %s\n", utils.Bytes2str(msg))
+	msg = c.UnpackHeader(msg)
+	fmt.Printf("b %s\n", utils.Bytes2str(msg))
+	return c
 }
+
+/***********
+ * Connack *
+ ***********/
 
 type connackMessage struct {
 	Header
@@ -443,6 +473,10 @@ func (c *connackMessage) Unpack(msg []byte) Message {
 	return c
 }
 
+/******************
+ * Will Toipc Req *
+ ******************/
+
 type willTopicReqMessage struct {
 	Header
 }
@@ -455,6 +489,10 @@ func (w *willTopicReqMessage) Unpack(msg []byte) Message {
 	_ = w.UnpackHeader(msg)
 	return w
 }
+
+/**************
+ * Will Topic *
+ **************/
 
 type willTopicMessage struct {
 	Header
@@ -476,6 +514,10 @@ func (w *willTopicMessage) Unpack(msg []byte) Message {
 	return w
 }
 
+/****************
+ * Will Msg Req *
+ ****************/
+
 type willMsgReqMessage struct {
 	Header
 }
@@ -488,6 +530,10 @@ func (w *willMsgReqMessage) Unpack(msg []byte) Message {
 	_ = w.UnpackHeader(msg)
 	return w
 }
+
+/************
+ * Will Msg *
+ ************/
 
 type willMsgMessage struct {
 	Header
@@ -506,6 +552,10 @@ func (w *willMsgMessage) Unpack(msg []byte) Message {
 	return w
 }
 
+/************
+ * Register *
+ ************/
+
 type registerMessage struct {
 	Header
 	topicId
@@ -521,6 +571,10 @@ func (r *registerMessage) Unpack(msg []byte) Message {
 	return r
 }
 
+/**********
+ * Regack *
+ **********/
+
 type regackMessage struct {
 	Header
 	topicId
@@ -535,6 +589,10 @@ func (r *regackMessage) Pack() []byte {
 func (r *regackMessage) Unpack(msg []byte) Message {
 	return r
 }
+
+/***********
+ * Publish *
+ ***********/
 
 type publishMessage struct {
 	Header
@@ -564,6 +622,10 @@ func (p *publishMessage) Unpack(msg []byte) Message {
 	return p
 }
 
+/**********
+ * Puback *
+ **********/
+
 type pubackMessage struct {
 	Header
 	topicId
@@ -579,6 +641,10 @@ func (p *pubackMessage) Unpack(msg []byte) Message {
 	return p
 }
 
+/**********
+ * Pubrec *
+ **********/
+
 type pubrecMessage struct {
 	Header
 	msgId
@@ -591,6 +657,10 @@ func (p *pubrecMessage) Pack() []byte {
 func (p *pubrecMessage) Unpack(msg []byte) Message {
 	return p
 }
+
+/**********
+ * Pubrel *
+ **********/
 
 type pubrelMessage struct {
 	Header
@@ -605,6 +675,10 @@ func (p *pubrelMessage) Unpack(msg []byte) Message {
 	return p
 }
 
+/***********
+ * Pubcomp *
+ ***********/
+
 type pubcompMessage struct {
 	Header
 	msgId
@@ -617,6 +691,10 @@ func (p *pubcompMessage) Pack() []byte {
 func (p *pubcompMessage) Unpack(msg []byte) Message {
 	return p
 }
+
+/*************
+ * Subscribe *
+ *************/
 
 type subscribeMessage struct {
 	Header
@@ -636,6 +714,10 @@ func (s *subscribeMessage) Unpack(msg []byte) Message {
 	return s
 }
 
+/**********
+ * Suback *
+ **********/
+
 type subackMessage struct {
 	Header
 	qoS
@@ -651,6 +733,10 @@ func (s *subackMessage) Pack() []byte {
 func (s *subackMessage) Unpack(msg []byte) Message {
 	return s
 }
+
+/***************
+ * Unsubscribe *
+ ***************/
 
 type unsubscribeMessage struct {
 	Header
@@ -668,6 +754,10 @@ func (u *unsubscribeMessage) Unpack(msg []byte) Message {
 	return u
 }
 
+/************
+ * Unsuback *
+ ************/
+
 type unsubackMessage struct {
 	Header
 	msgId
@@ -680,6 +770,10 @@ func (u *unsubackMessage) Pack() []byte {
 func (u *unsubackMessage) Unpack(msg []byte) Message {
 	return u
 }
+
+/***********
+ * Pingreq *
+ ***********/
 
 type pingreqMessage struct {
 	Header
@@ -694,6 +788,10 @@ func (p *pingreqMessage) Unpack(msg []byte) Message {
 	return p
 }
 
+/************
+ * Pingresp *
+ ************/
+
 type pingrespMessage struct {
 	Header
 }
@@ -705,6 +803,10 @@ func (p *pingrespMessage) Pack() []byte {
 func (p *pingrespMessage) Unpack(msg []byte) Message {
 	return p
 }
+
+/**************
+ * Disconnect *
+ **************/
 
 type disconnectMessage struct {
 	Header
@@ -718,6 +820,10 @@ func (d *disconnectMessage) Pack() []byte {
 func (d *disconnectMessage) Unpack(msg []byte) Message {
 	return d
 }
+
+/*********************
+ * Will Topic Update *
+ *********************/
 
 type willTopicUpdateMessage struct {
 	Header
@@ -734,6 +840,10 @@ func (w *willTopicUpdateMessage) Unpack(msg []byte) Message {
 	return w
 }
 
+/*******************
+ * Will Msg Update *
+ *******************/
+
 type willMsgUpdateMessage struct {
 	Header
 	willMsg
@@ -747,6 +857,10 @@ func (w *willMsgUpdateMessage) Unpack(msg []byte) Message {
 	return w
 }
 
+/*******************
+ * Will Topic Resp *
+ *******************/
+
 type willTopicRespMessage struct {
 	Header
 	msgReturnCode
@@ -759,6 +873,10 @@ func (w *willTopicRespMessage) Pack() []byte {
 func (w *willTopicRespMessage) Unpack(msg []byte) Message {
 	return w
 }
+
+/*****************
+ * Will Msg Resp *
+ *****************/
 
 type willMsgRespMessage struct {
 	Header

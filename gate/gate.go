@@ -1,5 +1,9 @@
 package gateway
 
+import (
+	"net"
+)
+
 type gwStatus byte
 
 const (
@@ -11,4 +15,6 @@ const (
 
 type Gateway interface {
 	Start()
+	Port() int
+	OnPacket(int, []byte, *net.UDPAddr)
 }
