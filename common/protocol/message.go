@@ -2,8 +2,6 @@ package gnatt
 
 import (
 	"encoding/binary"
-	"fmt"
-	"github.com/alsm/gnatt/common/utils"
 )
 
 func encodeUint16(num uint16) []byte {
@@ -39,7 +37,7 @@ func (h *Header) Length() (length int) {
 	return
 }
 
-func (h *Header) MsgType() (m MsgType) {
+func (h Header) MsgType() (m MsgType) {
 	m = h.msgType
 	return
 }
@@ -66,7 +64,16 @@ func (h *Header) UnpackHeader(msg []byte) []byte {
 	}
 }
 
+func Unpack(packet []byte) Message {
+	var h Header
+	h.UnpackHeader(packet)
+	m := NewMessage(h.MsgType())
+	m.Unpack(packet)
+	return m
+}
+
 type Message interface {
+	MsgType() MsgType
 	Pack() []byte
 	Unpack([]byte) Message
 }
@@ -80,9 +87,9 @@ func NewMessage(msgType MsgType) (m Message) {
 	case GWINFO:
 		m = new(gwInfoMessage)
 	case CONNECT:
-		m = new(connectMessage)
+		m = new(ConnectMessage)
 	case CONNACK:
-		m = new(connackMessage)
+		m = new(ConnackMessage)
 	case WILLTOPICREQ:
 		m = new(willTopicReqMessage)
 	case WILLTOPIC:
@@ -405,7 +412,7 @@ func (g *gwInfoMessage) Unpack(msg []byte) Message {
  * Connect *
  ***********/
 
-type connectMessage struct {
+type ConnectMessage struct {
 	Header
 	will         bool
 	cleanSession bool
@@ -414,41 +421,39 @@ type connectMessage struct {
 	clientId
 }
 
-func (c *connectMessage) Will() bool {
+func (c *ConnectMessage) Will() bool {
 	return c.will
 }
 
-func (c *connectMessage) SetWill(will bool) *connectMessage {
+func (c *ConnectMessage) SetWill(will bool) *ConnectMessage {
 	c.will = will
 	return c
 }
 
-func (c *connectMessage) CleanSession() bool {
+func (c *ConnectMessage) CleanSession() bool {
 	return c.cleanSession
 }
 
-func (c *connectMessage) SetCleanSession(cleanSession bool) *connectMessage {
+func (c *ConnectMessage) SetCleanSession(cleanSession bool) *ConnectMessage {
 	c.cleanSession = cleanSession
 	return c
 }
 
-func (c *connectMessage) ProtocolId() byte {
+func (c *ConnectMessage) ProtocolId() byte {
 	return c.protocolId
 }
 
-func (c *connectMessage) SetProtocolId(protocolId byte) *connectMessage {
+func (c *ConnectMessage) SetProtocolId(protocolId byte) *ConnectMessage {
 	c.protocolId = protocolId
 	return c
 }
 
-func (c *connectMessage) Pack() []byte {
+func (c *ConnectMessage) Pack() []byte {
 	return c.PackHeader()
 }
 
-func (c *connectMessage) Unpack(msg []byte) Message {
-	fmt.Printf("a %s\n", utils.Bytes2str(msg))
+func (c *ConnectMessage) Unpack(msg []byte) Message {
 	msg = c.UnpackHeader(msg)
-	fmt.Printf("b %s\n", utils.Bytes2str(msg))
 	return c
 }
 
@@ -456,18 +461,26 @@ func (c *connectMessage) Unpack(msg []byte) Message {
  * Connack *
  ***********/
 
-type connackMessage struct {
+type ConnackMessage struct {
 	Header
 	msgReturnCode
 }
 
-func (c *connackMessage) Pack() (msg []byte) {
+func NewConnackMessage(rc byte) *ConnackMessage {
+	var ca ConnackMessage
+	ca.SetLength(3)
+	ca.SetMsgType(CONNACK)
+	ca.SetMsgReturnCode(rc)
+	return &ca
+}
+
+func (c *ConnackMessage) Pack() (msg []byte) {
 	msg = append(msg, c.PackHeader()...)
 	msg = append(msg, c.MsgReturnCode())
 	return
 }
 
-func (c *connackMessage) Unpack(msg []byte) Message {
+func (c *ConnackMessage) Unpack(msg []byte) Message {
 	msg = c.UnpackHeader(msg)
 	c.SetMsgReturnCode(msg[0])
 	return c

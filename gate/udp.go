@@ -12,12 +12,12 @@ func port2str(port int) string {
 func listen(g Gateway) {
 	address, err := net.ResolveUDPAddr("udp", port2str(g.Port()))
 	chkerr(err)
-	socket, err := net.ListenUDP("udp", address)
+	udpconn, err := net.ListenUDP("udp", address)
 	chkerr(err)
 	for {
 		buffer := make([]byte, 1024)
-		nbytes, remote, err := socket.ReadFromUDP(buffer)
+		nbytes, remote, err := udpconn.ReadFromUDP(buffer)
 		chkerr(err)
-		go g.OnPacket(nbytes, buffer, remote)
+		go g.OnPacket(nbytes, buffer, udpconn, remote)
 	}
 }

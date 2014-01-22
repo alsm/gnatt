@@ -16,5 +16,5 @@ const (
 type Gateway interface {
 	Start()
 	Port() int
-	OnPacket(int, []byte, *net.UDPAddr)
+	OnPacket(int, []byte, *net.UDPConn, *net.UDPAddr)
 }
