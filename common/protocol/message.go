@@ -842,11 +842,17 @@ type DisconnectMessage struct {
 	duration
 }
 
-func (d *DisconnectMessage) Pack() []byte {
-	return d.PackHeader()
+func (d *DisconnectMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, d.PackHeader()...)
+	bytes = append(bytes, U162b(d.Duration())...)
+	return
 }
 
 func (d *DisconnectMessage) Unpack(msg []byte) Message {
+	msg = d.UnpackHeader(msg)
+	if len(msg) == 2 {
+		d.SetDuration(B2u16(msg))
+	}
 	return d
 }
 

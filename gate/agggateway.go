@@ -255,6 +255,8 @@ func (ag *AggGate) handle_PINGRESP(m Message, r *net.UDPAddr) {
 
 func (ag *AggGate) handle_DISCONNECT(m Message, r *net.UDPAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	dm := m.(*DisconnectMessage)
+	fmt.Printf("duration: %d\n", dm.Duration())
 }
 
 func (ag *AggGate) handle_WILLTOPICUPD(m Message, r *net.UDPAddr) {
