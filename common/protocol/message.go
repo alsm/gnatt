@@ -1,14 +1,9 @@
 package gnatt
 
 import (
-	"encoding/binary"
+	"fmt"
+	. "github.com/alsm/gnatt/common/utils"
 )
-
-func encodeUint16(num uint16) []byte {
-	encNum := make([]byte, 2)
-	binary.BigEndian.PutUint16(encNum, num)
-	return encNum
-}
 
 type MsgType byte
 
@@ -23,14 +18,14 @@ func (h *Header) SetLength(length int) {
 		tLength = append(tLength, byte(length))
 	} else {
 		tLength = append(tLength, 0x01)
-		tLength = append(tLength, encodeUint16(uint16(length))...)
+		tLength = append(tLength, U162b(uint16(length))...)
 	}
 	h.length = tLength
 }
 
 func (h *Header) Length() (length int) {
 	if h.length[0] == 0x01 {
-		length = int(binary.BigEndian.Uint16(h.length[1:3]))
+		length = int(B2u16(h.length[1:3]))
 	} else {
 		length = int(h.length[0])
 	}
@@ -65,9 +60,12 @@ func (h *Header) UnpackHeader(msg []byte) []byte {
 }
 
 func Unpack(packet []byte) Message {
+	fmt.Printf("Unpack: %s\n", Bytes2str(packet))
 	var h Header
 	h.UnpackHeader(packet)
+	fmt.Printf("h.MsgType() %s\n", h.MsgType())
 	m := NewMessage(h.MsgType())
+	fmt.Printf("m.MsgType() %s\n", m.MsgType())
 	m.Unpack(packet)
 	return m
 }
@@ -81,7 +79,7 @@ type Message interface {
 func NewMessage(msgType MsgType) (m Message) {
 	switch msgType {
 	case ADVERTISE:
-		m = new(advertiseMessage)
+		m = new(AdvertiseMessage)
 	case SEARCHGW:
 		m = new(searchgwMessage)
 	case GWINFO:
@@ -99,9 +97,9 @@ func NewMessage(msgType MsgType) (m Message) {
 	case WILLMSG:
 		m = new(willMsgMessage)
 	case REGISTER:
-		m = new(registerMessage)
+		m = new(RegisterMessage)
 	case REGACK:
-		m = new(regackMessage)
+		m = new(RegackMessage)
 	case PUBLISH:
 		m = new(publishMessage)
 	case PUBACK:
@@ -125,7 +123,7 @@ func NewMessage(msgType MsgType) (m Message) {
 	case PINGRESP:
 		m = new(pingrespMessage)
 	case DISCONNECT:
-		m = new(disconnectMessage)
+		m = new(DisconnectMessage)
 	case WILLTOPICUPD:
 		m = new(willTopicUpdateMessage)
 	case WILLTOPICRESP:
@@ -192,14 +190,14 @@ func (t *topicIdType) TopicIdType() byte {
 	return t.topicIdType
 }
 
-func (t topicIdType) SetTopicIdType(topicIdType byte) {
+func (t topicIdType) SetTopicIdType(TopicIdType byte) {
 	switch {
-	case (topicIdType < 0):
+	case (TopicIdType < 0):
 		t.topicIdType = 0
-	case (topicIdType > 2):
+	case (TopicIdType > 2):
 		t.topicIdType = 2
 	default:
-		t.topicIdType = topicIdType
+		t.topicIdType = TopicIdType
 	}
 }
 
@@ -211,8 +209,8 @@ func (t *topicId) TopicId() uint16 {
 	return t.topicId
 }
 
-func (t *topicId) SetTopicId(topicId uint16) {
-	t.topicId = topicId
+func (t *topicId) SetTopicId(TopicId uint16) {
+	t.topicId = TopicId
 }
 
 type topicName struct {
@@ -327,23 +325,23 @@ func (c *clientId) SetClientId(clientId []byte) {
  * Advertise *
  *************/
 
-type advertiseMessage struct {
+type AdvertiseMessage struct {
 	Header
 	gwId
 	duration
 }
 
-func (a *advertiseMessage) Pack() (packed []byte) {
+func (a *AdvertiseMessage) Pack() (packed []byte) {
 	packed = append(packed, a.PackHeader()...)
 	packed = append(packed, a.GwId())
-	packed = append(packed, encodeUint16(a.Duration())...)
+	packed = append(packed, U162b(a.Duration())...)
 	return
 }
 
-func (a *advertiseMessage) Unpack(msg []byte) Message {
+func (a *AdvertiseMessage) Unpack(msg []byte) Message {
 	msg = a.UnpackHeader(msg)
 	a.SetGwId(msg[0])
-	a.SetDuration(binary.BigEndian.Uint16(msg[1:3]))
+	a.SetDuration(B2u16(msg[1:3]))
 	return a
 }
 
@@ -474,9 +472,9 @@ func NewConnackMessage(rc byte) *ConnackMessage {
 	return &ca
 }
 
-func (c *ConnackMessage) Pack() (msg []byte) {
-	msg = append(msg, c.PackHeader()...)
-	msg = append(msg, c.MsgReturnCode())
+func (c *ConnackMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, c.PackHeader()...)
+	bytes = append(bytes, c.MsgReturnCode())
 	return
 }
 
@@ -569,18 +567,22 @@ func (w *willMsgMessage) Unpack(msg []byte) Message {
  * Register *
  ************/
 
-type registerMessage struct {
+type RegisterMessage struct {
 	Header
 	topicId
 	msgId
 	topicName
 }
 
-func (r *registerMessage) Pack() (msg []byte) {
+func (r *RegisterMessage) Pack() (msg []byte) {
 	return r.PackHeader()
 }
 
-func (r *registerMessage) Unpack(msg []byte) Message {
+func (r *RegisterMessage) Unpack(msg []byte) Message {
+	msg = r.UnpackHeader(msg)
+	r.SetTopicId(B2u16(msg[0:2]))
+	r.SetMsgId(B2u16(msg[2:4]))
+	r.SetTopicName(msg[4:len(msg)])
 	return r
 }
 
@@ -588,18 +590,32 @@ func (r *registerMessage) Unpack(msg []byte) Message {
  * Regack *
  **********/
 
-type regackMessage struct {
+type RegackMessage struct {
 	Header
 	topicId
 	msgId
 	msgReturnCode
 }
 
-func (r *regackMessage) Pack() []byte {
-	return r.PackHeader()
+func NewRegackMessage(topicId, msgId uint16, rc byte) *RegackMessage {
+	var ra RegackMessage
+	ra.SetLength(7)
+	ra.SetMsgType(REGACK)
+	ra.SetTopicId(topicId)
+	ra.SetMsgId(msgId)
+	ra.SetMsgReturnCode(rc)
+	return &ra
 }
 
-func (r *regackMessage) Unpack(msg []byte) Message {
+func (r *RegackMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, r.PackHeader()...)
+	bytes = append(bytes, U162b(r.TopicId())...)
+	bytes = append(bytes, U162b(r.MsgId())...)
+	bytes = append(bytes, r.MsgReturnCode())
+	return bytes
+}
+
+func (r *RegackMessage) Unpack(msg []byte) Message {
 	return r
 }
 
@@ -821,16 +837,16 @@ func (p *pingrespMessage) Unpack(msg []byte) Message {
  * Disconnect *
  **************/
 
-type disconnectMessage struct {
+type DisconnectMessage struct {
 	Header
 	duration
 }
 
-func (d *disconnectMessage) Pack() []byte {
+func (d *DisconnectMessage) Pack() []byte {
 	return d.PackHeader()
 }
 
-func (d *disconnectMessage) Unpack(msg []byte) Message {
+func (d *DisconnectMessage) Unpack(msg []byte) Message {
 	return d
 }
 

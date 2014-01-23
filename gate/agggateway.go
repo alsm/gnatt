@@ -4,8 +4,10 @@ import (
 	"fmt"
 	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
 	. "github.com/alsm/gnatt/common/protocol"
+	"github.com/alsm/gnatt/common/utils"
 	"net"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -13,6 +15,7 @@ type AggGate struct {
 	mqttclient *MQTT.MqttClient
 	stopsig    chan os.Signal
 	port       int
+	topics     topicNames
 }
 
 func NewAggGate(opts *MQTT.ClientOptions, stopsig chan os.Signal, port int) *AggGate {
@@ -21,6 +24,11 @@ func NewAggGate(opts *MQTT.ClientOptions, stopsig chan os.Signal, port int) *Agg
 		client,
 		stopsig,
 		port,
+		topicNames{
+			sync.RWMutex{},
+			make(map[string]uint16),
+			0,
+		},
 	}
 	return ag
 }
@@ -58,8 +66,10 @@ func (ag *AggGate) awaitStop() {
 
 func (ag *AggGate) OnPacket(nbytes int, buffer []byte, conn *net.UDPConn, remote *net.UDPAddr) {
 	fmt.Println("OnPacket!")
+	fmt.Printf("bytes: %s\n", utils.Bytes2str(buffer[0:nbytes]))
 
 	m := Unpack(buffer[0:nbytes])
+	fmt.Printf("m.MsgType(): %s\n", m.MsgType())
 
 	switch m.MsgType() {
 	case ADVERTISE:
@@ -81,7 +91,7 @@ func (ag *AggGate) OnPacket(nbytes int, buffer []byte, conn *net.UDPConn, remote
 	case WILLMSG:
 		ag.handle_WILLMSG(m, remote)
 	case REGISTER:
-		ag.handle_REGISTER(m, remote)
+		ag.handle_REGISTER(m, conn, remote)
 	case REGACK:
 		ag.handle_REGACK(m, remote)
 	case PUBLISH:
@@ -169,8 +179,30 @@ func (ag *AggGate) handle_WILLMSG(m Message, r *net.UDPAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_REGISTER(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_REGISTER(m Message, c *net.UDPConn, r *net.UDPAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	rm := m.(*RegisterMessage)
+	topic := string(rm.TopicName())
+	fmt.Printf("msg id: %d\n", rm.MsgId())
+	fmt.Printf("topic name: %s\n", topic)
+
+	var topicid uint16
+	if !ag.topics.contains(topic) {
+		topicid = ag.topics.put(topic)
+	} else {
+		topicid = ag.topics.get(topic)
+	}
+
+	fmt.Printf("ag topicid: %d\n", topicid)
+
+	ra := NewRegackMessage(topicid, rm.MsgId(), 0)
+	fmt.Printf("ra.MsgId: %d\n", ra.MsgId())
+
+	if nbytes, err := c.WriteToUDP(ra.Pack(), r); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("REGACK sent %d bytes\n", nbytes)
+	}
 }
 
 func (ag *AggGate) handle_REGACK(m Message, r *net.UDPAddr) {
