@@ -27,6 +27,7 @@ func main() {
 }
 
 func setup() (bool, int, [4]string) {
+	var configFile string
 	var aggregating bool
 	var udpport int
 	var mqttbroker string
@@ -34,6 +35,7 @@ func setup() (bool, int, [4]string) {
 	var mqttpass string
 	var mqttcid string
 
+	flag.StringVar(&configFile, "configuration", "", "Configuration File")
 	flag.BoolVar(&aggregating, "aggregating", false, "Transparent or Aggregating")
 	flag.IntVar(&udpport, "port", 0, "MQTT-SN UDP Listening Port")
 	flag.StringVar(&mqttbroker, "mqtt-broker", "", "MQTT Broker URI")
@@ -42,14 +44,18 @@ func setup() (bool, int, [4]string) {
 	flag.StringVar(&mqttcid, "mqtt-clientid", "gnatt-gateway", "MQTT Client ID")
 
 	flag.Parse()
-	if mqttbroker == "" {
-		fmt.Println("Must specify -mqtt-broker <tcp://host:port>")
-		os.Exit(1)
-	}
+	if configFile != "" {
+		SN.ParseConfigFile(configFile)
+	} else {
+		if mqttbroker == "" {
+			fmt.Println("Must specify -mqtt-broker <tcp://host:port>")
+			os.Exit(1)
+		}
 
-	if udpport == 0 {
-		fmt.Println("Must specify -port <port>")
-		os.Exit(1)
+		if udpport == 0 {
+			fmt.Println("Must specify -port <port>")
+			os.Exit(1)
+		}
 	}
 
 	opts := [4]string{mqttbroker, mqttuser, mqttpass, mqttcid}
