@@ -211,6 +211,10 @@ func (ag *AggGate) handle_REGACK(m Message, r *net.UDPAddr) {
 
 func (ag *AggGate) handle_PUBLISH(m Message, r *net.UDPAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	pm := m.(*PublishMessage)
+
+	fmt.Printf("pm.TopicId: %d\n", pm.TopicId())
+	fmt.Printf("pm.Data: %s\n", string(pm.Data()))
 }
 
 func (ag *AggGate) handle_PUBACK(m Message, r *net.UDPAddr) {

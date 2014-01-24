@@ -63,10 +63,10 @@ func Unpack(packet []byte) Message {
 	fmt.Printf("Unpack: %s\n", Bytes2str(packet))
 	var h Header
 	h.UnpackHeader(packet)
-	fmt.Printf("h.MsgType() %s\n", h.MsgType())
+	fmt.Printf("Unpack h.MsgType() %s\n", h.MsgType())
 	m := NewMessage(h.MsgType())
-	fmt.Printf("m.MsgType() %s\n", m.MsgType())
 	m.Unpack(packet)
+	fmt.Printf("Unpack m.MsgType() %s\n", m.MsgType())
 	return m
 }
 
@@ -101,7 +101,7 @@ func NewMessage(msgType MsgType) (m Message) {
 	case REGACK:
 		m = new(RegackMessage)
 	case PUBLISH:
-		m = new(publishMessage)
+		m = new(PublishMessage)
 	case PUBACK:
 		m = new(pubackMessage)
 	case PUBCOMP:
@@ -623,7 +623,7 @@ func (r *RegackMessage) Unpack(msg []byte) Message {
  * Publish *
  ***********/
 
-type publishMessage struct {
+type PublishMessage struct {
 	Header
 	dUP
 	qoS
@@ -634,20 +634,56 @@ type publishMessage struct {
 	data []byte
 }
 
-func (p *publishMessage) Data() []byte {
+func (p *PublishMessage) Data() []byte {
 	return p.data
 }
 
-func (p *publishMessage) SetData(data []byte) *publishMessage {
+func (p *PublishMessage) SetData(data []byte) *PublishMessage {
 	p.data = data
 	return p
 }
 
-func (p *publishMessage) Pack() []byte {
-	return p.PackHeader()
+func (p *PublishMessage) encodeFlags() byte {
+	var b byte
+	if p.dUP.DUP() {
+		b = 0x80
+	}
+	b |= (byte(p.qoS.QoS()) << 6)
+	if p.retain.Retain() {
+		b |= (1 << 4)
+	}
+	b |= p.topicIdType.TopicIdType()
+	return b
 }
 
-func (p *publishMessage) Unpack(msg []byte) Message {
+func decodeFlags(b byte) (d dUP, q qoS, r retain, t topicIdType) {
+	d.SetDUP((b & 0x80) == 1)
+	q.SetQoS(QoS(b & 0x60))
+	r.SetRetain((b & 0x10) == 1)
+	t.SetTopicIdType(b & 0x03)
+	return d, q, r, t
+}
+
+func (p *PublishMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, p.PackHeader()...)
+	bytes = append(bytes, p.encodeFlags())
+	bytes = append(bytes, U162b(p.TopicId())...)
+	bytes = append(bytes, U162b(p.MsgId())...)
+	bytes = append(bytes, p.Data()...)
+	return bytes
+}
+
+func (p *PublishMessage) Unpack(bytes []byte) Message {
+	bytes = p.UnpackHeader(bytes)
+	d, q, r, t := decodeFlags(bytes[0])
+	p.SetDUP(d.DUP())
+	p.SetQoS(q.QoS())
+	p.SetRetain(r.Retain())
+	p.SetTopicIdType(t.TopicIdType())
+
+	p.SetTopicId(B2u16(bytes[1:3]))
+	p.SetMsgId(B2u16(bytes[3:5]))
+	p.SetData(bytes[5:])
 	return p
 }
 
