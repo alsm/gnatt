@@ -3,13 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	SN "github.com/alsm/gnatt/gate"
+	G "github.com/alsm/gnatt/gateway/gate"
 	"os"
 	"os/signal"
 )
 
 func main() {
-	var gateway SN.Gateway
+	var gateway G.Gateway
 	stopsig := registerSignals()
 	gatewayconf := setup()
 
@@ -26,16 +26,16 @@ func main() {
 	gateway.Start()
 }
 
-func setup() *SN.GatewayConfig {
+func setup() *G.GatewayConfig {
 	var configFile string
 	var port int
 
 	flag.StringVar(&configFile, "configuration", "", "Configuration File")
-	flag.IntVar(&port, "port", 0, "MQTT-SN UDP Listening Port")
+	flag.IntVar(&port, "port", 0, "MQTT-G UDP Listening Port")
 	flag.Parse()
 
 	if configFile != "" {
-		if gc, err := SN.ParseConfigFile(configFile); err != nil {
+		if gc, err := G.ParseConfigFile(configFile); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		} else {
@@ -48,8 +48,8 @@ func setup() *SN.GatewayConfig {
 	return nil
 }
 
-func initAggregating(gc *SN.GatewayConfig, stopsig chan os.Signal) *SN.AggGate {
-	ag := SN.NewAggGate(gc, stopsig)
+func initAggregating(gc *G.GatewayConfig, stopsig chan os.Signal) *G.AggGate {
+	ag := G.NewAggGate(gc, stopsig)
 	return ag
 }
 
