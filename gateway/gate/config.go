@@ -39,14 +39,17 @@ func (gc *GatewayConfig) parseConfig(config string) error {
 	scanner := bufio.NewScanner(bytes.NewReader([]byte(config)))
 	scanner.Split(bufio.ScanLines)
 
+	var lineno int
 	for scanner.Scan() {
 		line := scanner.Text()
+		lineno++
 		if k, v, e := gc.parseLine(line); e != nil {
 			return e
 		} else if k == "" && v == "" {
 			// skipping comment or blank line
 		} else {
 			if e = gc.setOption(k, v); e != nil {
+				fmt.Printf("Error in configuration on line %d\n", lineno)
 				return e
 			}
 		}
@@ -94,6 +97,7 @@ func (gc *GatewayConfig) setOption(key, value string) error {
 func checkURI(value string) (string, error) {
 	if value[0:6] != "tcp://" &&
 		value[0:6] != "ssl://" &&
+		value[0:6] != "tls://" &&
 		value[0:7] != "tcps://" {
 		return "", fmt.Errorf("Invalid URI, must specify transport (ex: \"tcp://\"): \"%s\"", value)
 	}
