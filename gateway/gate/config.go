@@ -16,6 +16,7 @@ type GatewayConfig struct {
 	mqttuser     string
 	mqttpassword string
 	mqttclientid string
+	mqtttimeout  int
 }
 
 func (gc *GatewayConfig) IsAggregating() bool {
@@ -68,37 +69,56 @@ func (gc *GatewayConfig) parseLine(line string) (string, string, error) {
 }
 
 func (gc *GatewayConfig) setOption(key, value string) error {
+	var e error
 	switch key {
 	case "type":
-		switch value {
-		case "aggregating":
-			gc.aggregating = true
-		case "transparent":
-			gc.aggregating = false
-		default:
-			return fmt.Errorf("Invalid value specified for \"type\": \"%s\"", value)
-		}
-		return nil
+		gc.aggregating, e = checkType(value)
 	case "port":
-		if p, e := strconv.Atoi(value); e != nil {
-			return fmt.Errorf("Invalid value specified for \"port\" (not a number): \"%s\"", value)
-		} else {
-			gc.port = p
-		}
-		return nil
+		gc.port, e = checkNum("port", value)
 	case "mqtt-broker":
-		gc.mqttbroker = value
-		return nil
+		gc.mqttbroker, e = checkURI(value)
 	case "mqtt-user":
 		gc.mqttuser = value
-		return nil
 	case "mqtt-password":
 		gc.mqttpassword = value
-		return nil
 	case "mqtt-clientid":
 		gc.mqttclientid = value
-		return nil
+	case "mqtt-timeout":
+		gc.mqtttimeout, e = checkNum("mqtt-timeout", value)
 	default:
 		return fmt.Errorf("Unknown config option: \"%s\"", key)
+	}
+	return e
+}
+
+func checkURI(value string) (string, error) {
+	if value[0:6] != "tcp://" &&
+		value[0:6] != "ssl://" &&
+		value[0:7] != "tcps://" {
+		return "", fmt.Errorf("Invalid URI, must specify transport (ex: \"tcp://\"): \"%s\"", value)
+	}
+	// todo: check that a port is provided
+	// also there is probably a library way to verify a URI
+	return value, nil
+}
+
+func checkType(value string) (bool, error) {
+	var isAggregating bool
+	switch value {
+	case "aggregating":
+		isAggregating = true
+	case "transparent":
+		isAggregating = false
+	default:
+		return false, fmt.Errorf("Invalid value specified for \"type\": \"%s\"", value)
+	}
+	return isAggregating, nil
+}
+
+func checkNum(label, value string) (int, error) {
+	if p, e := strconv.Atoi(value); e != nil {
+		return 0, fmt.Errorf("Invalid value specified for \"%s\" (not a number): \"%s\"", label, value)
+	} else {
+		return p, nil
 	}
 }

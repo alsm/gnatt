@@ -30,6 +30,9 @@ func NewAggGate(gc *GatewayConfig, stopsig chan os.Signal) *AggGate {
 	if gc.mqttclientid != "" {
 		opts.SetClientId(gc.mqttclientid)
 	}
+	if gc.mqtttimeout > 0 {
+		opts.SetTimeout(uint(gc.mqtttimeout))
+	}
 	client := MQTT.NewClient(opts)
 	ag := &AggGate{
 		client,
