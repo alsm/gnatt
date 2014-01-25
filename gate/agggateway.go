@@ -18,12 +18,23 @@ type AggGate struct {
 	topics     topicNames
 }
 
-func NewAggGate(opts *MQTT.ClientOptions, stopsig chan os.Signal, port int) *AggGate {
+func NewAggGate(gc *GatewayConfig, stopsig chan os.Signal) *AggGate {
+	opts := MQTT.NewClientOptions()
+	opts.SetBroker(gc.mqttbroker)
+	if gc.mqttuser != "" {
+		opts.SetUsername(gc.mqttuser)
+	}
+	if gc.mqttpassword != "" {
+		opts.SetPassword(gc.mqttpassword)
+	}
+	if gc.mqttclientid != "" {
+		opts.SetClientId(gc.mqttclientid)
+	}
 	client := MQTT.NewClient(opts)
 	ag := &AggGate{
 		client,
 		stopsig,
-		port,
+		gc.port,
 		topicNames{
 			sync.RWMutex{},
 			make(map[string]uint16),
