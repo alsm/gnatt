@@ -40,7 +40,7 @@ func NewAggGate(gc *GatewayConfig, stopsig chan os.Signal) *AggGate {
 		gc.port,
 		topicNames{
 			sync.RWMutex{},
-			make(map[string]uint16),
+			make(map[uint16]string),
 			0,
 		},
 	}
@@ -201,10 +201,10 @@ func (ag *AggGate) handle_REGISTER(m Message, c *net.UDPConn, r *net.UDPAddr) {
 	fmt.Printf("topic name: %s\n", topic)
 
 	var topicid uint16
-	if !ag.topics.contains(topic) {
-		topicid = ag.topics.put(topic)
+	if !ag.topics.containsTopic(topic) {
+		topicid = ag.topics.putTopic(topic)
 	} else {
-		topicid = ag.topics.get(topic)
+		topicid = ag.topics.getId(topic)
 	}
 
 	fmt.Printf("ag topicid: %d\n", topicid)
@@ -229,6 +229,13 @@ func (ag *AggGate) handle_PUBLISH(m Message, r *net.UDPAddr) {
 
 	fmt.Printf("pm.TopicId: %d\n", pm.TopicId())
 	fmt.Printf("pm.Data: %s\n", string(pm.Data()))
+
+	// topic := ag.topics.get(pm.TopicId())
+
+	// receipt := ag.client.Publish(MQTT.QoS(pm.QoS()), topic, pm.Data())
+	// fmt.Println("published, waiting for receipt")
+	// <-receipt
+	// fmt.Println("receipt received")
 }
 
 func (ag *AggGate) handle_PUBACK(m Message, r *net.UDPAddr) {

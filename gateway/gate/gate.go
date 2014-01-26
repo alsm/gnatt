@@ -21,29 +21,56 @@ type Gateway interface {
 	OnPacket(int, []byte, *net.UDPConn, *net.UDPAddr)
 }
 
+// This needs to be efficient for indexing by topicId.
+// However, it is necessary when adding a new topic to index
+// by topic name (to check if it already exists). We optimze
+// for the former case.
 type topicNames struct {
 	sync.RWMutex
-	contents map[string]uint16
+	contents map[uint16]string
 	next     uint16
 }
 
-func (repo *topicNames) contains(topic string) bool {
-	return repo.get(topic) != 0
+// O(n)
+func (repo *topicNames) containsTopic(topic string) bool {
+	return repo.getId(topic) != 0
 }
 
-func (repo *topicNames) get(topic string) uint16 {
+// O(1)
+func (repo *topicNames) containsId(id uint16) bool {
+	return repo.getTopic(id) != ""
+}
+
+// O(n)
+func (repo *topicNames) getId(topic string) uint16 {
 	defer repo.RUnlock()
 	repo.RLock()
-	topicid := repo.contents[topic]
+	var topicid uint16
+	for id, topicVal := range repo.contents {
+		if topicVal == topic {
+			topicid = id
+			break
+		}
+	}
 	fmt.Printf("get[%s] -> %d\n", topic, topicid)
 	return topicid
 }
 
-func (repo *topicNames) put(topic string) uint16 {
+// O(1)
+func (repo *topicNames) getTopic(id uint16) string {
+	defer repo.RUnlock()
+	repo.RLock()
+	topic := repo.contents[id]
+	fmt.Printf("getTopic[%d] -> %s\n", id, topic)
+	return topic
+}
+
+// O(1)
+func (repo *topicNames) putTopic(topic string) uint16 {
 	defer repo.Unlock()
 	repo.Lock()
 	repo.next++
-	repo.contents[topic] = repo.next
-	fmt.Printf("put[%s] -> %d\n", topic, repo.next)
+	repo.contents[repo.next] = topic
+	fmt.Printf("put[%d] -> %s\n", repo.next, topic)
 	return repo.next
 }
