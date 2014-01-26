@@ -111,7 +111,7 @@ func NewMessage(msgType MsgType) (m Message) {
 	case PUBREL:
 		m = new(pubrelMessage)
 	case SUBSCRIBE:
-		m = new(subscribeMessage)
+		m = new(SubscribeMessage)
 	case SUBACK:
 		m = new(subackMessage)
 	case UNSUBSCRIBE:
@@ -182,6 +182,10 @@ func (g *gwId) SetGwId(gwId byte) {
 	g.gwId = gwId
 }
 
+// Types are
+//  0x00 - topic name
+//  0x01 - predefined topic id
+//  0x02 - short topic name
 type topicIdType struct {
 	topicIdType byte
 }
@@ -648,7 +652,7 @@ func (p *PublishMessage) encodeFlags() byte {
 	if p.dUP.DUP() {
 		b = 0x80
 	}
-	b |= (byte(p.qoS.QoS()) << 6)
+	b |= byte(p.qoS.QoS()) << 6
 	if p.retain.Retain() {
 		b |= (1 << 4)
 	}
@@ -656,7 +660,7 @@ func (p *PublishMessage) encodeFlags() byte {
 	return b
 }
 
-func decodeFlags(b byte) (d dUP, q qoS, r retain, t topicIdType) {
+func (p *PublishMessage) decodeFlags(b byte) (d dUP, q qoS, r retain, t topicIdType) {
 	d.SetDUP((b & 0x80) == 1)
 	q.SetQoS(QoS(b & 0x60))
 	r.SetRetain((b & 0x10) == 1)
@@ -675,7 +679,7 @@ func (p *PublishMessage) Pack() (bytes []byte) {
 
 func (p *PublishMessage) Unpack(bytes []byte) Message {
 	bytes = p.UnpackHeader(bytes)
-	d, q, r, t := decodeFlags(bytes[0])
+	d, q, r, t := p.decodeFlags(bytes[0])
 	p.SetDUP(d.DUP())
 	p.SetQoS(q.QoS())
 	p.SetRetain(r.Retain())
@@ -761,7 +765,7 @@ func (p *pubcompMessage) Unpack(msg []byte) Message {
  * Subscribe *
  *************/
 
-type subscribeMessage struct {
+type SubscribeMessage struct {
 	Header
 	dUP
 	qoS
@@ -771,11 +775,44 @@ type subscribeMessage struct {
 	topicName
 }
 
-func (s *subscribeMessage) Pack() []byte {
-	return s.PackHeader()
+func (s *SubscribeMessage) encodeFlags() byte {
+	var b byte
+	if s.dUP.DUP() {
+		b = 0x80
+	}
+	b |= byte(s.qoS.QoS()) << 6
+	b |= s.topicIdType.TopicIdType()
+	return b
 }
 
-func (s *subscribeMessage) Unpack(msg []byte) Message {
+func (s *SubscribeMessage) decodeFlags(b byte) (d dUP, q qoS, t topicIdType) {
+	d.SetDUP((b & 0x80) == 1)
+	q.SetQoS(QoS(b & 0x60))
+	t.SetTopicIdType(b & 0x03)
+	return
+}
+
+func (s *SubscribeMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, s.PackHeader()...)
+	bytes = append(bytes, s.encodeFlags())
+	bytes = append(bytes, U162b(s.MsgId())...)
+	if s.topicId.TopicId() != 0 {
+		bytes = append(bytes, U162b(s.TopicId())...)
+	} else {
+		bytes = append(bytes, s.TopicName()...)
+	}
+	return
+}
+
+func (s *SubscribeMessage) Unpack(bytes []byte) Message {
+	bytes = s.UnpackHeader(bytes)
+	d, q, t := s.decodeFlags(bytes[0])
+	s.SetDUP(d.DUP())
+	s.SetQoS(q.QoS())
+	s.SetTopicIdType(t.TopicIdType())
+
+	s.SetMsgId(B2u16(bytes[3:4]))
+
 	return s
 }
 
