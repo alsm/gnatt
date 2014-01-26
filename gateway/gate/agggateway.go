@@ -230,12 +230,13 @@ func (ag *AggGate) handle_PUBLISH(m Message, r *net.UDPAddr) {
 	fmt.Printf("pm.TopicId: %d\n", pm.TopicId())
 	fmt.Printf("pm.Data: %s\n", string(pm.Data()))
 
-	// topic := ag.topics.get(pm.TopicId())
+	topic := ag.topics.getTopic(pm.TopicId())
 
-	// receipt := ag.client.Publish(MQTT.QoS(pm.QoS()), topic, pm.Data())
-	// fmt.Println("published, waiting for receipt")
-	// <-receipt
-	// fmt.Println("receipt received")
+	// TODO: what should the MQTT-QoS be set as? In case of MQTTSN-QoS -1 ?
+	receipt := ag.mqttclient.Publish(MQTT.QoS(2), topic, pm.Data())
+	fmt.Println("published, waiting for receipt")
+	<-receipt
+	fmt.Println("receipt received")
 }
 
 func (ag *AggGate) handle_PUBACK(m Message, r *net.UDPAddr) {
