@@ -113,7 +113,7 @@ func NewMessage(msgType MsgType) (m Message) {
 	case SUBSCRIBE:
 		m = new(SubscribeMessage)
 	case SUBACK:
-		m = new(subackMessage)
+		m = new(SubackMessage)
 	case UNSUBSCRIBE:
 		m = new(unsubscribeMessage)
 	case UNSUBACK:
@@ -805,13 +805,25 @@ func (s *SubscribeMessage) Pack() (bytes []byte) {
 }
 
 func (s *SubscribeMessage) Unpack(bytes []byte) Message {
+	x := len(bytes)
 	bytes = s.UnpackHeader(bytes)
+	x = x - len(bytes)
 	d, q, t := s.decodeFlags(bytes[0])
 	s.SetDUP(d.DUP())
 	s.SetQoS(q.QoS())
 	s.SetTopicIdType(t.TopicIdType())
 
-	s.SetMsgId(B2u16(bytes[3:4]))
+	if s.TopicIdType() == 0 { // TODO: make an enum
+		fmt.Println("topic id type 0 (name)")
+		s.SetTopicName(bytes[5-x:len(bytes)])
+	} else if s.TopicIdType() == 1 {
+		fmt.Println("topic id type 1 (pre-defined)")
+		s.SetTopicId(B2u16(bytes[5-x:7-x]))
+	} else {
+		fmt.Println("topic id type 2 (short name)")
+		s.SetTopicName(bytes[5-x:7-x])
+	}
+	s.SetMsgId(B2u16(bytes[3-x:5-x]))
 
 	return s
 }
@@ -820,7 +832,7 @@ func (s *SubscribeMessage) Unpack(bytes []byte) Message {
  * Suback *
  **********/
 
-type subackMessage struct {
+type SubackMessage struct {
 	Header
 	qoS
 	topicId
@@ -828,11 +840,33 @@ type subackMessage struct {
 	msgReturnCode
 }
 
-func (s *subackMessage) Pack() []byte {
-	return s.PackHeader()
+func NewSubackMessage(rc byte, q QoS, topicId, msgId uint16) *SubackMessage {
+	var sa SubackMessage
+	sa.SetLength(8)
+	sa.SetMsgType(SUBACK)
+	sa.SetQoS(QoS(q))
+	sa.SetTopicId(topicId)
+	sa.SetMsgId(msgId)
+	sa.SetMsgReturnCode(rc)
+	return &sa
 }
 
-func (s *subackMessage) Unpack(msg []byte) Message {
+func (s *SubackMessage) encodeFlags() byte {
+	var b byte
+	b |= byte(s.qoS.QoS()) << 6
+	return b
+}
+
+func (s *SubackMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, s.PackHeader()...)
+	bytes = append(bytes, s.encodeFlags())
+	bytes = append(bytes, U162b(s.TopicId())...)
+	bytes = append(bytes, U162b(s.MsgId())...)
+	bytes = append(bytes, s.MsgReturnCode())
+	return
+}
+
+func (s *SubackMessage) Unpack(msg []byte) Message {
 	return s
 }
 

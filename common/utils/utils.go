@@ -8,7 +8,7 @@ import (
 func Bytes2str(bytes []byte) string {
 	s := ""
 	for _, b := range bytes {
-		s += fmt.Sprintf("%X", b)
+		s += fmt.Sprintf("%02X", b)
 	}
 	return s
 }

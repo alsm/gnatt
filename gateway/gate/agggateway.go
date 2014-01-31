@@ -119,7 +119,7 @@ func (ag *AggGate) OnPacket(nbytes int, buffer []byte, conn *net.UDPConn, remote
 	case PUBREL:
 		ag.handle_PUBREL(m, remote)
 	case SUBSCRIBE:
-		ag.handle_SUBSCRIBE(m, remote)
+		ag.handle_SUBSCRIBE(m, conn, remote)
 	case SUBACK:
 		ag.handle_SUBACK(m, remote)
 	case UNSUBSCRIBE:
@@ -255,8 +255,23 @@ func (ag *AggGate) handle_PUBREL(m Message, r *net.UDPAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_SUBSCRIBE(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_SUBSCRIBE(m Message, c *net.UDPConn, r *net.UDPAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	sm := m.(*SubscribeMessage)
+	fmt.Printf("sm.TopicIdType: %d\n", sm.TopicIdType())
+	if sm.TopicIdType() == 0 {
+		fmt.Printf("sm.TopicName: %s\n", string(sm.TopicName()))
+	}
+
+	// add topic / get topic id
+
+	suba := NewSubackMessage(0, sm.QoS(), 777, sm.MsgId())
+
+	if nbytes, err := c.WriteToUDP(suba.Pack(), r); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("SUBACK sent %d bytes\n", nbytes)
+	}
 }
 
 func (ag *AggGate) handle_SUBACK(m Message, r *net.UDPAddr) {
