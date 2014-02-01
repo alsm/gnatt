@@ -16,6 +16,7 @@ type AggGate struct {
 	stopsig    chan os.Signal
 	port       int
 	topics     topicNames
+	clients    Clients
 }
 
 func NewAggGate(gc *GatewayConfig, stopsig chan os.Signal) *AggGate {
@@ -42,6 +43,10 @@ func NewAggGate(gc *GatewayConfig, stopsig chan os.Signal) *AggGate {
 			sync.RWMutex{},
 			make(map[uint16]string),
 			0,
+		},
+		Clients{
+			sync.RWMutex{},
+			make(map[string]*Client),
 		},
 	}
 	return ag
@@ -157,19 +162,23 @@ func (ag *AggGate) handle_GWINFO(m Message, r *net.UDPAddr) {
 
 func (ag *AggGate) handle_CONNECT(m Message, c *net.UDPConn, r *net.UDPAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
-	wm, _ := m.(*ConnectMessage)
-	fmt.Printf("will: %v\n", wm.Will())
+	cm, _ := m.(*ConnectMessage)
+	fmt.Printf("clientid: %s\n", cm.ClientId())
+	fmt.Printf("will: %v\n", cm.Will())
 
-	if wm.Will() {
+	if cm.Will() {
 		// do something about that
 	}
 
+	client := NewClient(string(cm.ClientId()), c, r)
+	ag.clients.AddClient(client)
+
 	ca := NewConnackMessage(0)
 
-	if nbytes, err := c.WriteToUDP(ca.Pack(), r); err != nil {
+	if err := client.Write(ca); err != nil {
 		fmt.Println(err)
 	} else {
-		fmt.Printf("CONNACK sent %d bytes\n", nbytes)
+		fmt.Println("CONNACK was sent")
 	}
 }
 

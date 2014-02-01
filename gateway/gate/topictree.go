@@ -4,26 +4,24 @@ import (
 	"sync"
 )
 
-type subscriber int // uhmmm
-
 type TopicTree struct {
 	sync.RWMutex
 }
 
 type node struct {
-	text        string
-	subscribers []*subscriber
-	children    []*node
+	text     string
+	clients  []*Client
+	children []*node
 }
 
-func (tt *TopicTree) AddSubscription(s *subscriber, topicid uint16) {
+func (tt *TopicTree) AddSubscription(s *Client, topicid uint16) {
 }
 
-func (tt *TopicTree) RemoveSubscription(s *subscriber, topicId ...uint16) error {
+func (tt *TopicTree) RemoveSubscription(s *Client, topicId ...uint16) error {
 	return nil
 }
 
-func (tt *TopicTree) SubscribersOf(topicId uint16) []*subscriber {
-	var subscribers []*subscriber
-	return subscribers
+func (tt *TopicTree) ClientsOf(topicId uint16) []*Client {
+	var Clients []*Client
+	return Clients
 }
