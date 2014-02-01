@@ -5,6 +5,9 @@ import (
 	"net"
 )
 
+type uConn struct{ c *net.UDPConn }
+type uAddr struct{ r *net.UDPAddr }
+
 func port2str(port int) string {
 	return fmt.Sprintf(":%d", port)
 }
@@ -16,8 +19,14 @@ func listen(g Gateway) {
 	chkerr(err)
 	for {
 		buffer := make([]byte, 1024)
-		nbytes, remote, err := udpconn.ReadFromUDP(buffer)
+		n, remote, err := udpconn.ReadFromUDP(buffer)
 		chkerr(err)
-		go g.OnPacket(nbytes, buffer, udpconn, remote)
+		c := uConn{
+			udpconn,
+		}
+		r := uAddr{
+			remote,
+		}
+		go g.OnPacket(n, buffer, c, r)
 	}
 }

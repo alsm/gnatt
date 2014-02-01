@@ -2,7 +2,6 @@ package gateway
 
 import (
 	"fmt"
-	"net"
 	"sync"
 )
 
@@ -18,7 +17,7 @@ const (
 type Gateway interface {
 	Start()
 	Port() int
-	OnPacket(int, []byte, *net.UDPConn, *net.UDPAddr)
+	OnPacket(int, []byte, uConn, uAddr)
 }
 
 // This needs to be efficient for indexing by topicId.

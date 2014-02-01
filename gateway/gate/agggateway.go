@@ -5,7 +5,6 @@ import (
 	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
 	. "github.com/alsm/gnatt/common/protocol"
 	"github.com/alsm/gnatt/common/utils"
-	"net"
 	"os"
 	"sync"
 	"time"
@@ -83,7 +82,7 @@ func (ag *AggGate) awaitStop() {
 	os.Exit(0)
 }
 
-func (ag *AggGate) OnPacket(nbytes int, buffer []byte, conn *net.UDPConn, remote *net.UDPAddr) {
+func (ag *AggGate) OnPacket(nbytes int, buffer []byte, conn uConn, remote uAddr) {
 	fmt.Println("OnPacket!")
 	fmt.Printf("bytes: %s\n", utils.Bytes2str(buffer[0:nbytes]))
 
@@ -148,19 +147,19 @@ func (ag *AggGate) OnPacket(nbytes int, buffer []byte, conn *net.UDPConn, remote
 	}
 }
 
-func (ag *AggGate) handle_ADVERTISE(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_ADVERTISE(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_SEARCHGW(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_SEARCHGW(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_GWINFO(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_GWINFO(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_CONNECT(m Message, c *net.UDPConn, r *net.UDPAddr) {
+func (ag *AggGate) handle_CONNECT(m Message, c uConn, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 	cm, _ := m.(*ConnectMessage)
 	fmt.Printf("clientid: %s\n", cm.ClientId())
@@ -182,27 +181,27 @@ func (ag *AggGate) handle_CONNECT(m Message, c *net.UDPConn, r *net.UDPAddr) {
 	}
 }
 
-func (ag *AggGate) handle_CONNACK(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_CONNACK(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_WILLTOPICREQ(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_WILLTOPICREQ(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_WILLTOPIC(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_WILLTOPIC(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_WILLMSGREQ(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_WILLMSGREQ(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_WILLMSG(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_WILLMSG(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_REGISTER(m Message, c *net.UDPConn, r *net.UDPAddr) {
+func (ag *AggGate) handle_REGISTER(m Message, c uConn, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 	rm := m.(*RegisterMessage)
 	topic := string(rm.TopicName())
@@ -221,18 +220,18 @@ func (ag *AggGate) handle_REGISTER(m Message, c *net.UDPConn, r *net.UDPAddr) {
 	ra := NewRegackMessage(topicid, rm.MsgId(), 0)
 	fmt.Printf("ra.MsgId: %d\n", ra.MsgId())
 
-	if nbytes, err := c.WriteToUDP(ra.Pack(), r); err != nil {
+	if nbytes, err := c.c.WriteToUDP(ra.Pack(), r.r); err != nil {
 		fmt.Println(err)
 	} else {
 		fmt.Printf("REGACK sent %d bytes\n", nbytes)
 	}
 }
 
-func (ag *AggGate) handle_REGACK(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_REGACK(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_PUBLISH(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_PUBLISH(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 	pm := m.(*PublishMessage)
 
@@ -248,23 +247,23 @@ func (ag *AggGate) handle_PUBLISH(m Message, r *net.UDPAddr) {
 	fmt.Println("receipt received")
 }
 
-func (ag *AggGate) handle_PUBACK(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_PUBACK(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_PUBCOMP(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_PUBCOMP(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_PUBREC(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_PUBREC(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_PUBREL(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_PUBREL(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_SUBSCRIBE(m Message, c *net.UDPConn, r *net.UDPAddr) {
+func (ag *AggGate) handle_SUBSCRIBE(m Message, c uConn, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 	sm := m.(*SubscribeMessage)
 	fmt.Printf("sm.TopicIdType: %d\n", sm.TopicIdType())
@@ -276,51 +275,51 @@ func (ag *AggGate) handle_SUBSCRIBE(m Message, c *net.UDPConn, r *net.UDPAddr) {
 
 	suba := NewSubackMessage(0, sm.QoS(), 777, sm.MsgId())
 
-	if nbytes, err := c.WriteToUDP(suba.Pack(), r); err != nil {
+	if nbytes, err := c.c.WriteToUDP(suba.Pack(), r.r); err != nil {
 		fmt.Println(err)
 	} else {
 		fmt.Printf("SUBACK sent %d bytes\n", nbytes)
 	}
 }
 
-func (ag *AggGate) handle_SUBACK(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_SUBACK(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_UNSUBSCRIBE(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_UNSUBSCRIBE(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_UNSUBACK(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_UNSUBACK(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_PINGREQ(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_PINGREQ(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_PINGRESP(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_PINGRESP(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_DISCONNECT(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_DISCONNECT(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 	dm := m.(*DisconnectMessage)
 	fmt.Printf("duration: %d\n", dm.Duration())
 }
 
-func (ag *AggGate) handle_WILLTOPICUPD(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_WILLTOPICUPD(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_WILLTOPICRESP(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_WILLTOPICRESP(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_WILLMSGUPD(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_WILLMSGUPD(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }
 
-func (ag *AggGate) handle_WILLMSGRESP(m Message, r *net.UDPAddr) {
+func (ag *AggGate) handle_WILLMSGRESP(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
 }

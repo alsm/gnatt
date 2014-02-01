@@ -3,17 +3,16 @@ package gateway
 import (
 	"fmt"
 	. "github.com/alsm/gnatt/common/protocol"
-	"net"
 	"sync"
 )
 
 type Client struct {
 	ClientId string
-	Socket   *net.UDPConn
-	Address  *net.UDPAddr
+	Socket   uConn
+	Address  uAddr
 }
 
-func NewClient(id string, c *net.UDPConn, a *net.UDPAddr) *Client {
+func NewClient(id string, c uConn, a uAddr) *Client {
 	return &Client{
 		id,
 		c,
@@ -22,7 +21,7 @@ func NewClient(id string, c *net.UDPConn, a *net.UDPAddr) *Client {
 }
 
 func (c *Client) Write(m Message) error {
-	_, e := c.Socket.WriteToUDP(m.Pack(), c.Address)
+	_, e := c.Socket.c.WriteToUDP(m.Pack(), c.Address.r)
 	return e
 }
 
