@@ -74,8 +74,8 @@ func (gc *GatewayConfig) parseLine(line string) (string, string, error) {
 func (gc *GatewayConfig) setOption(key, value string) error {
 	var e error
 	switch key {
-	case "type":
-		gc.aggregating, e = checkType(value)
+	case "mode":
+		gc.aggregating, e = checkMode(value)
 	case "port":
 		gc.port, e = checkNum("port", value)
 	case "mqtt-broker":
@@ -106,7 +106,7 @@ func checkURI(value string) (string, error) {
 	return value, nil
 }
 
-func checkType(value string) (bool, error) {
+func checkMode(value string) (bool, error) {
 	var isAggregating bool
 	switch value {
 	case "aggregating":
@@ -114,7 +114,7 @@ func checkType(value string) (bool, error) {
 	case "transparent":
 		isAggregating = false
 	default:
-		return false, fmt.Errorf("Invalid value specified for \"type\": \"%s\"", value)
+		return false, fmt.Errorf("Invalid value specified for \"mode\": \"%s\"", value)
 	}
 	return isAggregating, nil
 }
