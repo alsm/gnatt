@@ -2,7 +2,6 @@ package gateway
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 )
 
@@ -55,24 +54,17 @@ func (tt *TopicTree) AddSubscription(client *Client, topic string) error {
 	defer tt.Unlock()
 	tt.Lock()
 	fmt.Printf("AddSubscription(\"%s\", \"%s\")\n", client.ClientId, topic)
-	if topic[len(topic)-1] == '/' {
-		return fmt.Errorf("topic level seperator (\"/\") must not be last")
-	}
-	levels := strings.Split(topic, "/")
-
-	n := tt.root
-	// walk the tree following the path of topic, creating new
-	// nodes as necessary
-	for i, level := range levels {
-		if level == "" && i != 0 {
-			return fmt.Errorf("empty-string not allowed other than at root")
+	if levels, e := ValidateSubscribeTopicName(topic); e != nil {
+		return e
+	} else {
+		n := tt.root
+		// walk the tree following the path of topic, creating new
+		// nodes as necessary
+		for _, level := range levels {
+			n, _ = n.goTo(level)
 		}
-		if level == "#" && i != len(levels)-1 {
-			return fmt.Errorf("multi-level wild card must be last")
-		}
-		n, _ = n.goTo(level)
+		n.addClient(client)
 	}
-	n.addClient(client)
 	return nil
 }
 

@@ -267,13 +267,24 @@ func (ag *AggGate) handle_SUBSCRIBE(m Message, c uConn, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	sm := m.(*SubscribeMessage)
 	fmt.Printf("sm.TopicIdType: %d\n", sm.TopicIdType())
+	var topid uint16
 	if sm.TopicIdType() == 0 {
-		fmt.Printf("sm.TopicName: %s\n", string(sm.TopicName()))
-	}
+		topic := string(sm.TopicName())
+		fmt.Printf("sm.TopicName: %s\n", topic)
+		if !ContainsWildcard(topic) {
+			topid = ag.topics.getId(topic)
+			if topid == 0 {
+				topid = ag.topics.putTopic(topic)
+			}
+		} else {
+			// todo: if topic contains wildcard, something about REGISTER
+			// at a later time, but send topic id 0x0000 for now
+		}
+	} // todo: other topic id types
 
 	// add topic / get topic id
 
-	suba := NewSubackMessage(0, sm.QoS(), 777, sm.MsgId())
+	suba := NewSubackMessage(0, sm.QoS(), topid, sm.MsgId())
 
 	if nbytes, err := c.c.WriteToUDP(suba.Pack(), r.r); err != nil {
 		fmt.Println(err)
