@@ -1,27 +1,90 @@
 package gateway
 
 import (
+	"fmt"
+	"strings"
 	"sync"
 )
 
 type TopicTree struct {
 	sync.RWMutex
+	root *node
 }
 
 type node struct {
-	text     string
 	clients  []*Client
-	children []*node
+	children map[string]*node
 }
 
-func (tt *TopicTree) AddSubscription(s *Client, topicid uint16) {
+func newNode() *node {
+	return &node{
+		make([]*Client, 0),
+		make(map[string]*node),
+	}
 }
 
-func (tt *TopicTree) RemoveSubscription(s *Client, topicId ...uint16) error {
+// return true if level needed to be created, false otherwise
+func (n *node) goTo(level string) (*node, bool) {
+	fmt.Printf("goTo(\"%s\")\n", level)
+	created := false
+	if n.children[level] == nil {
+		n.children[level] = newNode()
+		created = true
+	}
+	return n.children[level], created
+}
+
+func (n *node) addClient(client *Client) {
+	n.clients = append(n.clients, client)
+	fmt.Printf("addClient(\"%s\")\n", client.ClientId)
+}
+
+func NewTopicTree() *TopicTree {
+	var t TopicTree
+	// Annoyingly, the spec allows for an empty
+	// string root (but no empty string levels after that)
+	// ex: "/a/b" and "a/b"
+	// do NOT match, and "a//b" is not allowed.
+	// Consequently, "/#" and "b" do NOT match because
+	// they contain a different number of levels
+	t.root = newNode()
+	return &t
+}
+
+func (tt *TopicTree) AddSubscription(client *Client, topic string) error {
+	defer tt.Unlock()
+	tt.Lock()
+	fmt.Printf("AddSubscription(\"%s\", \"%s\")\n", client.ClientId, topic)
+	if topic[len(topic)-1] == '/' {
+		return fmt.Errorf("topic level seperator (\"/\") must not be last")
+	}
+	levels := strings.Split(topic, "/")
+
+	n := tt.root
+	// walk the tree following the path of topic, creating new
+	// nodes as necessary
+	for i, level := range levels {
+		if level == "" && i != 0 {
+			return fmt.Errorf("empty-string not allowed other than at root")
+		}
+		if level == "#" && i != len(levels)-1 {
+			return fmt.Errorf("multi-level wild card must be last")
+		}
+		n, _ = n.goTo(level)
+	}
+	n.addClient(client)
 	return nil
 }
 
-func (tt *TopicTree) ClientsOf(topicId uint16) []*Client {
+func (tt *TopicTree) RemoveSubscription(s *Client, topicId ...uint16) error {
+	defer tt.Unlock()
+	tt.Lock()
+	return nil
+}
+
+func (tt *TopicTree) ClientsOf(topic string) []*Client {
+	defer tt.RUnlock()
+	tt.RLock()
 	var Clients []*Client
 	return Clients
 }

@@ -148,25 +148,25 @@ func (ag *AggGate) OnPacket(nbytes int, buffer []byte, conn uConn, remote uAddr)
 }
 
 func (ag *AggGate) handle_ADVERTISE(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_SEARCHGW(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_GWINFO(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_CONNECT(m Message, c uConn, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	cm, _ := m.(*ConnectMessage)
 	fmt.Printf("clientid: %s\n", cm.ClientId())
 	fmt.Printf("will: %v\n", cm.Will())
 
 	if cm.Will() {
-		// do something about that
+		// todo: do something about that
 	}
 
 	client := NewClient(string(cm.ClientId()), c, r)
@@ -182,27 +182,27 @@ func (ag *AggGate) handle_CONNECT(m Message, c uConn, r uAddr) {
 }
 
 func (ag *AggGate) handle_CONNACK(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_WILLTOPICREQ(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_WILLTOPIC(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_WILLMSGREQ(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_WILLMSG(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_REGISTER(m Message, c uConn, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	rm := m.(*RegisterMessage)
 	topic := string(rm.TopicName())
 	fmt.Printf("msg id: %d\n", rm.MsgId())
@@ -228,11 +228,11 @@ func (ag *AggGate) handle_REGISTER(m Message, c uConn, r uAddr) {
 }
 
 func (ag *AggGate) handle_REGACK(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_PUBLISH(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	pm := m.(*PublishMessage)
 
 	fmt.Printf("pm.TopicId: %d\n", pm.TopicId())
@@ -248,23 +248,23 @@ func (ag *AggGate) handle_PUBLISH(m Message, r uAddr) {
 }
 
 func (ag *AggGate) handle_PUBACK(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_PUBCOMP(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_PUBREC(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_PUBREL(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_SUBSCRIBE(m Message, c uConn, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	sm := m.(*SubscribeMessage)
 	fmt.Printf("sm.TopicIdType: %d\n", sm.TopicIdType())
 	if sm.TopicIdType() == 0 {
@@ -283,43 +283,43 @@ func (ag *AggGate) handle_SUBSCRIBE(m Message, c uConn, r uAddr) {
 }
 
 func (ag *AggGate) handle_SUBACK(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_UNSUBSCRIBE(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_UNSUBACK(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_PINGREQ(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_PINGRESP(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_DISCONNECT(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	dm := m.(*DisconnectMessage)
 	fmt.Printf("duration: %d\n", dm.Duration())
 }
 
 func (ag *AggGate) handle_WILLTOPICUPD(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_WILLTOPICRESP(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_WILLMSGUPD(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_WILLMSGRESP(m Message, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r)
+	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
