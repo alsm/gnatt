@@ -13,10 +13,7 @@ func ContainsWildcard(topic string) bool {
 	if len(topic) > 1 && (topic[len(topic)-2:] == "/#" || topic[len(topic)-2:] == "/+") {
 		return true
 	}
-	if strings.Contains(topic, "/+/") {
-		return true
-	}
-	return false
+	return strings.Contains(topic, "/+/")
 }
 
 func ValidateSubscribeTopicName(topic string) ([]string, error) {
