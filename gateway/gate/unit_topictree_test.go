@@ -124,3 +124,66 @@ func Test_AddSubscription_SPSbSP(t *testing.T) {
 	e := tt.AddSubscription(c, "/+/b/+")
 	eok(e, t)
 }
+
+func Test_AddSubscription(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c := NewClient("c", conn, addr)
+	tt := NewTopicTree()
+
+	topics := []string{
+		"a",
+		"a/b",
+		"a/b/c",
+		"a/b/d",
+		"a/b/e",
+		"a/b/f",
+		"a/b/c/d/e/f/g/h/i/j/k",
+		"a/b/c/d/e/f/g/h/i/j/+",
+		"a/b/c/d/e/f/g/h/i/j/k/+",
+		"a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z",
+		"a/b/c/d/e/f/g/h/i/j/k",
+		"+/b/c",
+		"a/+/b",
+		"a/b/+",
+		"a/b/#",
+		"#",
+	}
+
+	for _, topic := range topics {
+		e := tt.AddSubscription(c, topic)
+		eok(e, t)
+	}
+}
+
+func Benchmark_AddSubscription(b *testing.B) {
+	var conn uConn
+	var addr uAddr
+	c := NewClient("b", conn, addr)
+	tt := NewTopicTree()
+
+	topics := []string{
+		"a",
+		"a/b",
+		"a/b/c",
+		"a/b/d",
+		"a/b/e",
+		"a/b/f",
+		"a/b/c/d/e/f/g/h/i/j/k",
+		"a/b/c/d/e/f/g/h/i/j/+",
+		"a/b/c/d/e/f/g/h/i/j/k/+",
+		"a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z",
+		"a/b/c/d/e/f/g/h/i/j/k",
+		"+/b/c",
+		"a/+/b",
+		"a/b/+",
+		"a/b/#",
+		"#",
+	}
+
+	for i := 0; i < b.N; i++ {
+		for _, topic := range topics {
+			tt.AddSubscription(c, topic)
+		}
+	}
+}

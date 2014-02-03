@@ -1,7 +1,7 @@
 package gateway
 
 import (
-	"fmt"
+	//"fmt"
 	"sync"
 )
 
@@ -24,7 +24,6 @@ func newNode() *node {
 
 // return true if level needed to be created, false otherwise
 func (n *node) goTo(level string) (*node, bool) {
-	fmt.Printf("goTo(\"%s\")\n", level)
 	created := false
 	if n.children[level] == nil {
 		n.children[level] = newNode()
@@ -35,7 +34,6 @@ func (n *node) goTo(level string) (*node, bool) {
 
 func (n *node) addClient(client *Client) {
 	n.clients = append(n.clients, client)
-	fmt.Printf("addClient(\"%s\")\n", client.ClientId)
 }
 
 func NewTopicTree() *TopicTree {
@@ -53,7 +51,7 @@ func NewTopicTree() *TopicTree {
 func (tt *TopicTree) AddSubscription(client *Client, topic string) error {
 	defer tt.Unlock()
 	tt.Lock()
-	fmt.Printf("AddSubscription(\"%s\", \"%s\")\n", client.ClientId, topic)
+	//fmt.Printf("AddSubscription(\"%s\", \"%s\")\n", client.ClientId, topic)
 	if levels, e := ValidateSubscribeTopicName(topic); e != nil {
 		return e
 	} else {
