@@ -16,6 +16,12 @@ func enok(e error, t *testing.T) {
 	}
 }
 
+func chkb(b bool, e bool, t *testing.T) {
+	if b != e {
+		t.Fatalf("ERROR bool\n")
+	}
+}
+
 func Test_NewTopicTree(t *testing.T) {
 	tt := NewTopicTree()
 	if tt == nil {
@@ -31,8 +37,9 @@ func Test_AddSubscription_alpha(t *testing.T) {
 	var addr uAddr
 	c := NewClient("c1", conn, addr)
 	tt := NewTopicTree()
-	e := tt.AddSubscription(c, "alpha")
+	b, e := tt.AddSubscription(c, "alpha")
 	eok(e, t)
+	chkb(b, true, t)
 }
 
 func Test_AddSubscription_Salpha(t *testing.T) {
@@ -40,8 +47,9 @@ func Test_AddSubscription_Salpha(t *testing.T) {
 	var addr uAddr
 	c := NewClient("c2", conn, addr)
 	tt := NewTopicTree()
-	e := tt.AddSubscription(c, "/alpha")
+	b, e := tt.AddSubscription(c, "/alpha")
 	eok(e, t)
+	chkb(b, true, t)
 }
 
 func Test_AddSubscription_alphaS(t *testing.T) {
@@ -49,8 +57,9 @@ func Test_AddSubscription_alphaS(t *testing.T) {
 	var addr uAddr
 	c := NewClient("c2.5", conn, addr)
 	tt := NewTopicTree()
-	e := tt.AddSubscription(c, "alpha/")
+	b, e := tt.AddSubscription(c, "alpha/")
 	enok(e, t)
+	chkb(b, false, t)
 }
 
 func Test_AddSubscription_aSbScSd(t *testing.T) {
@@ -58,8 +67,9 @@ func Test_AddSubscription_aSbScSd(t *testing.T) {
 	var addr uAddr
 	c := NewClient("c3", conn, addr)
 	tt := NewTopicTree()
-	e := tt.AddSubscription(c, "a/b/c/d")
+	b, e := tt.AddSubscription(c, "a/b/c/d")
 	eok(e, t)
+	chkb(b, true, t)
 }
 
 func Test_AddSubscription_aSSb(t *testing.T) {
@@ -67,8 +77,9 @@ func Test_AddSubscription_aSSb(t *testing.T) {
 	var addr uAddr
 	c := NewClient("c4", conn, addr)
 	tt := NewTopicTree()
-	e := tt.AddSubscription(c, "a//b")
+	b, e := tt.AddSubscription(c, "a//b")
 	enok(e, t)
+	chkb(b, false, t)
 }
 
 func Test_AddSubscription_H(t *testing.T) {
@@ -76,8 +87,9 @@ func Test_AddSubscription_H(t *testing.T) {
 	var addr uAddr
 	c := NewClient("c5", conn, addr)
 	tt := NewTopicTree()
-	e := tt.AddSubscription(c, "#")
+	b, e := tt.AddSubscription(c, "#")
 	eok(e, t)
+	chkb(b, true, t)
 }
 
 func Test_AddSubscription_SH(t *testing.T) {
@@ -85,8 +97,9 @@ func Test_AddSubscription_SH(t *testing.T) {
 	var addr uAddr
 	c := NewClient("c6", conn, addr)
 	tt := NewTopicTree()
-	e := tt.AddSubscription(c, "/#")
+	b, e := tt.AddSubscription(c, "/#")
 	eok(e, t)
+	chkb(b, true, t)
 }
 
 func Test_AddSubscription_aSHSb(t *testing.T) {
@@ -94,8 +107,9 @@ func Test_AddSubscription_aSHSb(t *testing.T) {
 	var addr uAddr
 	c := NewClient("c7", conn, addr)
 	tt := NewTopicTree()
-	e := tt.AddSubscription(c, "a/#/b")
+	b, e := tt.AddSubscription(c, "a/#/b")
 	enok(e, t)
+	chkb(b, false, t)
 }
 
 func Test_AddSubscription_aSHS(t *testing.T) {
@@ -103,8 +117,9 @@ func Test_AddSubscription_aSHS(t *testing.T) {
 	var addr uAddr
 	c := NewClient("c8", conn, addr)
 	tt := NewTopicTree()
-	e := tt.AddSubscription(c, "a/#/")
+	b, e := tt.AddSubscription(c, "a/#/")
 	enok(e, t)
+	chkb(b, false, t)
 }
 
 func Test_AddSubscription_P(t *testing.T) {
@@ -112,8 +127,9 @@ func Test_AddSubscription_P(t *testing.T) {
 	var addr uAddr
 	c := NewClient("c9", conn, addr)
 	tt := NewTopicTree()
-	e := tt.AddSubscription(c, "+")
+	b, e := tt.AddSubscription(c, "+")
 	eok(e, t)
+	chkb(b, true, t)
 }
 
 func Test_AddSubscription_SPSbSP(t *testing.T) {
@@ -121,8 +137,9 @@ func Test_AddSubscription_SPSbSP(t *testing.T) {
 	var addr uAddr
 	c := NewClient("c10", conn, addr)
 	tt := NewTopicTree()
-	e := tt.AddSubscription(c, "/+/b/+")
+	b, e := tt.AddSubscription(c, "/+/b/+")
 	eok(e, t)
+	chkb(b, true, t)
 }
 
 func Test_AddSubscription(t *testing.T) {
@@ -151,7 +168,7 @@ func Test_AddSubscription(t *testing.T) {
 	}
 
 	for _, topic := range topics {
-		e := tt.AddSubscription(c, topic)
+		_, e := tt.AddSubscription(c, topic)
 		eok(e, t)
 	}
 }

@@ -1,7 +1,7 @@
 package gateway
 
 import (
-	//"fmt"
+	"fmt"
 	"sync"
 )
 
@@ -24,6 +24,7 @@ func newNode() *node {
 
 // return true if level needed to be created, false otherwise
 func (n *node) goTo(level string) (*node, bool) {
+	fmt.Printf("goTo(\"%s\")\n", level)
 	created := false
 	if n.children[level] == nil {
 		n.children[level] = newNode()
@@ -32,8 +33,13 @@ func (n *node) goTo(level string) (*node, bool) {
 	return n.children[level], created
 }
 
-func (n *node) addClient(client *Client) {
+// return true if this is the first client to be added
+// to this node (representing a subscription)
+func (n *node) addClient(client *Client) bool {
+	isFirst := len(n.clients) == 0
 	n.clients = append(n.clients, client)
+	fmt.Printf("addClient(\"%s\")\n", client.ClientId)
+	return isFirst
 }
 
 func NewTopicTree() *TopicTree {
@@ -48,12 +54,14 @@ func NewTopicTree() *TopicTree {
 	return &t
 }
 
-func (tt *TopicTree) AddSubscription(client *Client, topic string) error {
+// return false if there is already a subscriber of this topic,
+// true if this is the first subscriber
+func (tt *TopicTree) AddSubscription(client *Client, topic string) (bool, error) {
 	defer tt.Unlock()
 	tt.Lock()
-	//fmt.Printf("AddSubscription(\"%s\", \"%s\")\n", client.ClientId, topic)
+	fmt.Printf("AddSubscription(\"%s\", \"%s\")\n", client.ClientId, topic)
 	if levels, e := ValidateSubscribeTopicName(topic); e != nil {
-		return e
+		return false, e
 	} else {
 		n := tt.root
 		// walk the tree following the path of topic, creating new
@@ -61,9 +69,8 @@ func (tt *TopicTree) AddSubscription(client *Client, topic string) error {
 		for _, level := range levels {
 			n, _ = n.goTo(level)
 		}
-		n.addClient(client)
+		return n.addClient(client), nil
 	}
-	return nil
 }
 
 func (tt *TopicTree) RemoveSubscription(s *Client, topicId ...uint16) error {
