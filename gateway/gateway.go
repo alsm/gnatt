@@ -30,7 +30,7 @@ func setup() *G.GatewayConfig {
 	var configFile string
 	var port int
 
-	flag.StringVar(&configFile, "configuration", "", "Configuration File")
+	flag.StringVar(&configFile, "c", "", "Configuration File")
 	flag.IntVar(&port, "port", 0, "MQTT-G UDP Listening Port")
 	flag.Parse()
 
