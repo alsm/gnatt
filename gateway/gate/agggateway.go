@@ -50,10 +50,13 @@ func NewAggGate(gc *GatewayConfig, stopsig chan os.Signal) *AggGate {
 			sync.RWMutex{},
 			make(map[string]*Client),
 		},
-		func(msg MQTT.Message) {
-			fmt.Println("subscribeHandler!")
-		},
+		nil,
 	}
+
+	ag.handler = func(msg MQTT.Message) {
+		ag.distribute(msg)
+	}
+
 	return ag
 }
 
@@ -87,6 +90,21 @@ func (ag *AggGate) awaitStop() {
 
 	os.Exit(0)
 }
+
+func (ag *AggGate) distribute(msg MQTT.Message) {
+	topic := msg.Topic()
+	fmt.Println("AG distributing a msg for topic %s\n", topic)
+
+	// collect a list of clients to which msg should be
+	// published
+	// then publish msg to those clients (async)
+
+	clients := ag.tTree.SubscribersOf(topic)
+	for i, client := range clients {
+		fmt.Printf("publishing [%d] to client: %s\n", i, client)
+	}
+}
+
 
 func (ag *AggGate) OnPacket(nbytes int, buffer []byte, conn uConn, remote uAddr) {
 	fmt.Println("OnPacket!")

@@ -40,6 +40,12 @@ func Test_AddSubscription_alpha(t *testing.T) {
 	b, e := tt.AddSubscription(c, "alpha")
 	eok(e, t)
 	chkb(b, true, t)
+	if len(tt.root.clients) != 0 {
+		t.Fatalf("AddSub root had client")
+	}
+	if len(tt.root.children["alpha"].clients) != 1 {
+		t.Fatalf("AddSub alpha != 1")
+	}
 }
 
 func Test_AddSubscription_Salpha(t *testing.T) {
@@ -202,5 +208,93 @@ func Benchmark_AddSubscription(b *testing.B) {
 		for _, topic := range topics {
 			tt.AddSubscription(c, topic)
 		}
+	}
+}
+
+func Test_SubscribersOf_none(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c := NewClient("so_A", conn, addr)
+	tt := NewTopicTree()
+
+	sum := 0
+	sum += len(tt.SubscribersOf("+"))
+	sum += len(tt.SubscribersOf("#"))
+	sum += len(tt.SubscribersOf("a"))
+	sum += len(tt.SubscribersOf("/+"))
+	sum += len(tt.SubscribersOf("/#"))
+	sum += len(tt.SubscribersOf("/a"))
+
+	tt.AddSubscription(c, "kappa")
+	sum += len(tt.SubscribersOf("+"))
+	sum += len(tt.SubscribersOf("#"))
+	sum += len(tt.SubscribersOf("a"))
+	sum += len(tt.SubscribersOf("/+"))
+	sum += len(tt.SubscribersOf("/#"))
+	sum += len(tt.SubscribersOf("/a"))
+
+	tt.AddSubscription(c, "/kappa")
+	sum += len(tt.SubscribersOf("+"))
+	sum += len(tt.SubscribersOf("#"))
+	sum += len(tt.SubscribersOf("a"))
+	sum += len(tt.SubscribersOf("/+"))
+	sum += len(tt.SubscribersOf("/#"))
+	sum += len(tt.SubscribersOf("/a"))
+
+	tt.AddSubscription(c, "kappa/#")
+	sum += len(tt.SubscribersOf("+"))
+	sum += len(tt.SubscribersOf("#"))
+	sum += len(tt.SubscribersOf("a"))
+	sum += len(tt.SubscribersOf("/+"))
+	sum += len(tt.SubscribersOf("/#"))
+	sum += len(tt.SubscribersOf("/a"))
+
+	tt.AddSubscription(c, "kappa/+")
+	sum += len(tt.SubscribersOf("+"))
+	sum += len(tt.SubscribersOf("#"))
+	sum += len(tt.SubscribersOf("a"))
+	sum += len(tt.SubscribersOf("/+"))
+	sum += len(tt.SubscribersOf("/#"))
+	sum += len(tt.SubscribersOf("/a"))
+
+	tt.AddSubscription(c, "a/b")
+	sum += len(tt.SubscribersOf("+"))
+	sum += len(tt.SubscribersOf("#"))
+	sum += len(tt.SubscribersOf("a"))
+	sum += len(tt.SubscribersOf("/+"))
+	sum += len(tt.SubscribersOf("/#"))
+	sum += len(tt.SubscribersOf("/a"))
+
+	tt.AddSubscription(c, "b/a")
+	sum += len(tt.SubscribersOf("+"))
+	sum += len(tt.SubscribersOf("#"))
+	sum += len(tt.SubscribersOf("a"))
+	sum += len(tt.SubscribersOf("/+"))
+	sum += len(tt.SubscribersOf("/#"))
+	sum += len(tt.SubscribersOf("/a"))
+
+	tt.AddSubscription(c, "/a/#")
+	sum += len(tt.SubscribersOf("+"))
+	sum += len(tt.SubscribersOf("#"))
+	sum += len(tt.SubscribersOf("a"))
+	sum += len(tt.SubscribersOf("/+"))
+	sum += len(tt.SubscribersOf("/#"))
+	sum += len(tt.SubscribersOf("/a"))
+	
+	if sum != 0 {
+		t.Fatalf("SubscribersOf_none had subscriber")
+	}
+}
+
+func Test_SubscribersOf_1(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c := NewClient("so_A", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c, "a")
+	subs := tt.SubscribersOf("a")
+	if len(subs) != 1 {
+		t.Fatalf("SubscribersOf_1 bad")
 	}
 }
