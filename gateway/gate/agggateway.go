@@ -14,8 +14,10 @@ type AggGate struct {
 	mqttclient *MQTT.MqttClient
 	stopsig    chan os.Signal
 	port       int
-	topics     topicNames
+	tIndex     topicNames
+	tTree      *TopicTree
 	clients    Clients
+	handler    MQTT.MessageHandler
 }
 
 func NewAggGate(gc *GatewayConfig, stopsig chan os.Signal) *AggGate {
@@ -43,9 +45,13 @@ func NewAggGate(gc *GatewayConfig, stopsig chan os.Signal) *AggGate {
 			make(map[uint16]string),
 			0,
 		},
+		NewTopicTree(),
 		Clients{
 			sync.RWMutex{},
 			make(map[string]*Client),
+		},
+		func(msg MQTT.Message) {
+			fmt.Println("subscribeHandler!")
 		},
 	}
 	return ag
@@ -162,7 +168,9 @@ func (ag *AggGate) handle_GWINFO(m Message, r uAddr) {
 func (ag *AggGate) handle_CONNECT(m Message, c uConn, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	cm, _ := m.(*ConnectMessage)
-	fmt.Printf("clientid: %s\n", cm.ClientId())
+	clientid := string(cm.ClientId())
+	fmt.Printf("clientid: %s\n", clientid)
+	fmt.Printf("remoteaddr: %s\n", r.r)
 	fmt.Printf("will: %v\n", cm.Will())
 
 	if cm.Will() {
@@ -209,10 +217,10 @@ func (ag *AggGate) handle_REGISTER(m Message, c uConn, r uAddr) {
 	fmt.Printf("topic name: %s\n", topic)
 
 	var topicid uint16
-	if !ag.topics.containsTopic(topic) {
-		topicid = ag.topics.putTopic(topic)
+	if !ag.tIndex.containsTopic(topic) {
+		topicid = ag.tIndex.putTopic(topic)
 	} else {
-		topicid = ag.topics.getId(topic)
+		topicid = ag.tIndex.getId(topic)
 	}
 
 	fmt.Printf("ag topicid: %d\n", topicid)
@@ -238,7 +246,7 @@ func (ag *AggGate) handle_PUBLISH(m Message, r uAddr) {
 	fmt.Printf("pm.TopicId: %d\n", pm.TopicId())
 	fmt.Printf("pm.Data: %s\n", string(pm.Data()))
 
-	topic := ag.topics.getTopic(pm.TopicId())
+	topic := ag.tIndex.getTopic(pm.TopicId())
 
 	// TODO: what should the MQTT-QoS be set as? In case of MQTTSN-QoS -1 ?
 	receipt := ag.mqttclient.Publish(MQTT.QoS(2), topic, pm.Data())
@@ -267,14 +275,14 @@ func (ag *AggGate) handle_SUBSCRIBE(m Message, c uConn, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	sm := m.(*SubscribeMessage)
 	fmt.Printf("sm.TopicIdType: %d\n", sm.TopicIdType())
+	topic := string(sm.TopicName())
 	var topid uint16
 	if sm.TopicIdType() == 0 {
-		topic := string(sm.TopicName())
 		fmt.Printf("sm.TopicName: %s\n", topic)
 		if !ContainsWildcard(topic) {
-			topid = ag.topics.getId(topic)
+			topid = ag.tIndex.getId(topic)
 			if topid == 0 {
-				topid = ag.topics.putTopic(topic)
+				topid = ag.tIndex.putTopic(topic)
 			}
 		} else {
 			// todo: if topic contains wildcard, something about REGISTER
@@ -282,14 +290,26 @@ func (ag *AggGate) handle_SUBSCRIBE(m Message, c uConn, r uAddr) {
 		}
 	} // todo: other topic id types
 
-	// add topic / get topic id
-
-	suba := NewSubackMessage(0, sm.QoS(), topid, sm.MsgId())
-
-	if nbytes, err := c.c.WriteToUDP(suba.Pack(), r.r); err != nil {
-		fmt.Println(err)
+	client := ag.clients.GetClient(r)
+	if first, err := ag.tTree.AddSubscription(client, topic); err != nil {
+		fmt.Println("error adding subscription: %v\n", err)
+		// todo: suback an error message?
 	} else {
-		fmt.Printf("SUBACK sent %d bytes\n", nbytes)
+		if first {
+			fmt.Println("first subscriber of subscription, subscribbing via MQTT")
+			if receipt, sserr := ag.mqttclient.StartSubscription(ag.handler, topic, MQTT.QOS_TWO); sserr != nil {
+				fmt.Printf("StartSubscription error: %v\n", sserr)
+			} else {
+				<-receipt
+			}
+		}
+		// AG is subscribed at this point
+		suba := NewSubackMessage(0, sm.QoS(), topid, sm.MsgId())
+		if nbytes, err := c.c.WriteToUDP(suba.Pack(), r.r); err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Printf("SUBACK sent %d bytes\n", nbytes)
+		}
 	}
 }
 
