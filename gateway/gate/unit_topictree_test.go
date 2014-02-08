@@ -280,21 +280,272 @@ func Test_SubscribersOf_none(t *testing.T) {
 	sum += len(tt.SubscribersOf("/+"))
 	sum += len(tt.SubscribersOf("/#"))
 	sum += len(tt.SubscribersOf("/a"))
-	
+
 	if sum != 0 {
 		t.Fatalf("SubscribersOf_none had subscriber")
+	}
+}
+
+func alen(exp, act, i int, t *testing.T) {
+	if exp != act {
+		t.Errorf("assert #%d expected %d, got %d", i, exp, act)
 	}
 }
 
 func Test_SubscribersOf_1(t *testing.T) {
 	var conn uConn
 	var addr uAddr
-	c := NewClient("so_A", conn, addr)
+	c := NewClient("so_1", conn, addr)
 	tt := NewTopicTree()
 
 	tt.AddSubscription(c, "a")
-	subs := tt.SubscribersOf("a")
-	if len(subs) != 1 {
-		t.Fatalf("SubscribersOf_1 bad")
-	}
+
+	alen(1, len(tt.SubscribersOf("a")), 1, t)
+	alen(0, len(tt.SubscribersOf("b")), 2, t)
+	alen(0, len(tt.SubscribersOf("/a")), 3, t)
+	alen(0, len(tt.SubscribersOf("/b")), 4, t)
+}
+
+func Test_SubscribersOf_1h(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c := NewClient("so_1h", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c, "#")
+
+	alen(1, len(tt.SubscribersOf("a")), 1, t)
+	alen(1, len(tt.SubscribersOf("b")), 2, t)
+	alen(1, len(tt.SubscribersOf("/a")), 3, t)
+	alen(1, len(tt.SubscribersOf("/b")), 4, t)
+}
+
+func Test_SubscribersOf_1sh(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c := NewClient("so_1h", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c, "/#")
+
+	alen(0, len(tt.SubscribersOf("a")), 1, t)
+	alen(0, len(tt.SubscribersOf("b")), 2, t)
+	alen(1, len(tt.SubscribersOf("/a")), 3, t)
+	alen(1, len(tt.SubscribersOf("/b")), 4, t)
+}
+
+func Test_SubscribersOf_1p(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c := NewClient("so_1h", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c, "+")
+
+	alen(1, len(tt.SubscribersOf("a")), 1, t)
+	alen(1, len(tt.SubscribersOf("b")), 2, t)
+	alen(0, len(tt.SubscribersOf("/a")), 3, t)
+	alen(0, len(tt.SubscribersOf("/b")), 4, t)
+}
+
+func Test_SubscribersOf_1sp(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c := NewClient("so_1h", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c, "/+")
+
+	alen(0, len(tt.SubscribersOf("a")), 1, t)
+	alen(0, len(tt.SubscribersOf("b")), 2, t)
+	alen(1, len(tt.SubscribersOf("/a")), 3, t)
+	alen(1, len(tt.SubscribersOf("/b")), 4, t)
+}
+
+func Test_SubscribersOf_2(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c := NewClient("so_1", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c, "a/b")
+
+	alen(0, len(tt.SubscribersOf("a")), 1, t)
+	alen(0, len(tt.SubscribersOf("b")), 2, t)
+	alen(0, len(tt.SubscribersOf("/a")), 3, t)
+	alen(0, len(tt.SubscribersOf("/b")), 4, t)
+	alen(1, len(tt.SubscribersOf("a/b")), 5, t)
+	alen(0, len(tt.SubscribersOf("b/a")), 6, t)
+	alen(0, len(tt.SubscribersOf("a/a")), 7, t)
+	alen(0, len(tt.SubscribersOf("a/b/c")), 8, t)
+}
+
+func Test_SubscribersOf_2ash(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c := NewClient("so_1", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c, "a/#")
+
+	alen(0, len(tt.SubscribersOf("a")), 1, t)
+	alen(0, len(tt.SubscribersOf("b")), 2, t)
+	alen(0, len(tt.SubscribersOf("/a")), 3, t)
+	alen(0, len(tt.SubscribersOf("/b")), 4, t)
+	alen(1, len(tt.SubscribersOf("a/b")), 5, t)
+	alen(0, len(tt.SubscribersOf("b/a")), 6, t)
+	alen(1, len(tt.SubscribersOf("a/a")), 7, t)
+	alen(1, len(tt.SubscribersOf("a/b/c")), 8, t)
+}
+
+func Test_SubscribersOf_2h(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c := NewClient("so_1", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c, "#")
+
+	alen(1, len(tt.SubscribersOf("a")), 1, t)
+	alen(1, len(tt.SubscribersOf("b")), 2, t)
+	alen(1, len(tt.SubscribersOf("/a")), 3, t)
+	alen(1, len(tt.SubscribersOf("/b")), 4, t)
+	alen(1, len(tt.SubscribersOf("a/b")), 5, t)
+	alen(1, len(tt.SubscribersOf("b/a")), 6, t)
+	alen(1, len(tt.SubscribersOf("a/a")), 7, t)
+	alen(1, len(tt.SubscribersOf("a/b/c")), 8, t)
+}
+
+func Test_SubscribersOf_2p(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c := NewClient("so_1", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c, "+")
+
+	alen(1, len(tt.SubscribersOf("a")), 1, t)
+	alen(1, len(tt.SubscribersOf("b")), 2, t)
+	alen(0, len(tt.SubscribersOf("/a")), 3, t)
+	alen(0, len(tt.SubscribersOf("/b")), 4, t)
+	alen(0, len(tt.SubscribersOf("a/b")), 5, t)
+	alen(0, len(tt.SubscribersOf("b/a")), 6, t)
+	alen(0, len(tt.SubscribersOf("a/a")), 7, t)
+	alen(0, len(tt.SubscribersOf("a/b/c")), 8, t)
+}
+
+func Test_SubscribersOf_2asp(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c := NewClient("so_1", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c, "a/+")
+
+	alen(0, len(tt.SubscribersOf("a")), 1, t)
+	alen(0, len(tt.SubscribersOf("b")), 2, t)
+	alen(0, len(tt.SubscribersOf("/a")), 3, t)
+	alen(0, len(tt.SubscribersOf("/b")), 4, t)
+	alen(1, len(tt.SubscribersOf("a/b")), 5, t)
+	alen(0, len(tt.SubscribersOf("b/a")), 6, t)
+	alen(1, len(tt.SubscribersOf("a/a")), 7, t)
+	alen(0, len(tt.SubscribersOf("a/b/c")), 8, t)
+}
+
+func Test_SubscribersOf_3aspsc(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c := NewClient("so_1", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c, "a/+/c")
+
+	alen(0, len(tt.SubscribersOf("a")), 1, t)
+	alen(0, len(tt.SubscribersOf("b")), 2, t)
+	alen(0, len(tt.SubscribersOf("/a")), 3, t)
+	alen(0, len(tt.SubscribersOf("/b")), 4, t)
+	alen(0, len(tt.SubscribersOf("a/b")), 5, t)
+	alen(0, len(tt.SubscribersOf("b/a")), 6, t)
+	alen(0, len(tt.SubscribersOf("a/a")), 7, t)
+	alen(1, len(tt.SubscribersOf("a/b/c")), 8, t)
+	alen(0, len(tt.SubscribersOf("a/b/z")), 8, t)
+}
+
+func Test_SubscribersOf_3saspsc(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c := NewClient("so_1", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c, "/a/+/c")
+
+	alen(0, len(tt.SubscribersOf("a")), 1, t)
+	alen(0, len(tt.SubscribersOf("b")), 2, t)
+	alen(0, len(tt.SubscribersOf("/a")), 3, t)
+	alen(0, len(tt.SubscribersOf("/b")), 4, t)
+	alen(0, len(tt.SubscribersOf("a/b")), 5, t)
+	alen(0, len(tt.SubscribersOf("b/a")), 6, t)
+	alen(0, len(tt.SubscribersOf("a/a")), 7, t)
+	alen(0, len(tt.SubscribersOf("a/b/c")), 8, t)
+	alen(0, len(tt.SubscribersOf("a/b/z")), 9, t)
+}
+
+func Test_SubscribersOf_mix(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c := NewClient("so_1", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c, "/a/+/c/#")
+
+	alen(0, len(tt.SubscribersOf("a")), 1, t)
+	alen(0, len(tt.SubscribersOf("b")), 2, t)
+	alen(0, len(tt.SubscribersOf("/a")), 3, t)
+	alen(0, len(tt.SubscribersOf("/b")), 4, t)
+	alen(0, len(tt.SubscribersOf("/a/b")), 5, t)
+	alen(0, len(tt.SubscribersOf("/b/a")), 6, t)
+	alen(0, len(tt.SubscribersOf("/a/a")), 7, t)
+	alen(0, len(tt.SubscribersOf("/a/b/c")), 8, t)
+	alen(0, len(tt.SubscribersOf("/a/b/z")), 9, t)
+	alen(1, len(tt.SubscribersOf("/a/b/c/d")), 10, t)
+	alen(1, len(tt.SubscribersOf("/a/b/c/d/e")), 11, t)
+	alen(1, len(tt.SubscribersOf("/a/b/c/d/e/f")), 12, t)
+	alen(0, len(tt.SubscribersOf("/a/b/z/d/e/f")), 13, t)
+	alen(0, len(tt.SubscribersOf("/a/b/b/c/d/e/f")), 14, t)
+	alen(0, len(tt.SubscribersOf("a/b/c/d")), 15, t)
+	alen(0, len(tt.SubscribersOf("a/b/c/d/e")), 16, t)
+	alen(0, len(tt.SubscribersOf("a/b/c/d/e/f")), 17, t)
+}
+
+func Test_SubscribersOf_multi(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c1 := NewClient("c1", conn, addr)
+	c2 := NewClient("c2", conn, addr)
+	c3 := NewClient("c3", conn, addr)
+	c4 := NewClient("c4", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c1, "a")
+	tt.AddSubscription(c2, "/a/+/c/d")
+	tt.AddSubscription(c3, "/a/+/c/#")
+	tt.AddSubscription(c4, "/a/+/c/d/+")
+
+	alen(1, len(tt.SubscribersOf("a")), 1, t)
+	alen(0, len(tt.SubscribersOf("b")), 2, t)
+	alen(0, len(tt.SubscribersOf("/a")), 3, t)
+	alen(0, len(tt.SubscribersOf("/b")), 4, t)
+	alen(0, len(tt.SubscribersOf("/a/b")), 5, t)
+	alen(0, len(tt.SubscribersOf("/b/a")), 6, t)
+	alen(0, len(tt.SubscribersOf("/a/a")), 7, t)
+	alen(0, len(tt.SubscribersOf("/a/b/c")), 8, t)
+	alen(0, len(tt.SubscribersOf("/a/b/z")), 9, t)
+	alen(2, len(tt.SubscribersOf("/a/b/c/d")), 10, t)
+	alen(2, len(tt.SubscribersOf("/a/b/c/d/e")), 11, t)
+	alen(1, len(tt.SubscribersOf("/a/b/c/d/e/f")), 12, t)
+	alen(0, len(tt.SubscribersOf("/a/b/z/d/e/f")), 13, t)
+	alen(0, len(tt.SubscribersOf("/a/b/b/c/d/e/f")), 14, t)
+	alen(0, len(tt.SubscribersOf("a/b/c/d")), 15, t)
+	alen(0, len(tt.SubscribersOf("a/b/c/d/e")), 16, t)
+	alen(0, len(tt.SubscribersOf("a/b/c/d/e/f")), 17, t)
 }

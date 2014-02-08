@@ -2,8 +2,8 @@ package gateway
 
 import (
 	"fmt"
-	"sync"
 	"strings"
+	"sync"
 )
 
 type TopicTree struct {
@@ -80,57 +80,39 @@ func (tt *TopicTree) RemoveSubscription(s *Client, topicId ...uint16) error {
 	return nil
 }
 
+// topic MUST be valid (ie no wild cards, no empty level, no ending slash)
 func (tt *TopicTree) SubscribersOf(topic string) (clients []*Client) {
 	defer tt.RUnlock()
 	tt.RLock()
 
 	n := tt.root
 	levels := strings.Split(topic, "/")
-	subscribers(n, levels, clients)
+	subscribers(n, levels, &clients)
 	return
 }
 
-// good luck understanding this
-//    levels is the topic string (tokenized). It will not have wild cards.
-//    The TopicTree must be walked down, as long as one of the children in the
-//    next level is a wildcard or a level match.
-//      If a child is "#", we add the clients of that child. The recursive stepping continues.
-//      If a child is "+", we then start a recursive tree at the next level.
-//      If a child == levels[0], we recursivly step to the next level.
-//      Otherwise we just return and pop back up.
-func subscribers(n *node, levels []string, clients []*Client) {
-	fmt.Printf("subscribers: levels: %v\n", levels)
-	fmt.Printf("len n.clients: %d\n", len(n.clients))
-	fmt.Printf("len n.children: %d\n", len(n.children))
-
+func subscribers(n *node, levels []string, clients *[]*Client) {
 	if len(levels) == 0 {
 		return
 	}
 
 	if hash := n.children["#"]; hash != nil {
-		clients = append(clients, hash.clients...)
+		*clients = append(*clients, hash.clients...)
 	}
 
 	if plus := n.children["+"]; plus != nil {
-		subscribers(plus, levels[1:], clients)
-	}
-
-	if len(levels) == 1 {
-		fmt.Println("len(levels)==1")
-		if last := n.children[levels[0]]; last != nil {
-			fmt.Println("adding last level childrens")
-			clients = append(clients, last.clients...)
-		} else if lastH := n.children["#"]; lastH != nil {
-			fmt.Println("adding last level hashes")
-			clients = append(clients, lastH.clients...)
-		} else if lastP := n.children["+"]; lastP != nil {
-			fmt.Println("adding last level pluses")
-			clients = append(clients, lastP.clients...)
+		if len(levels) == 1 {
+			*clients = append(*clients, plus.clients...)
+		} else {
+			subscribers(plus, levels[1:], clients)
 		}
-		return // needed?
 	}
 
-	if next := n.children[levels[0]]; next != nil {
-		subscribers(next, levels[1:], clients)
+	if match := n.children[levels[0]]; match != nil {
+		if len(levels) == 1 {
+			*clients = append(*clients, match.clients...)
+		} else {
+			subscribers(match, levels[1:], clients)
+		}
 	}
 }

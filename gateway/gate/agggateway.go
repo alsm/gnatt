@@ -105,7 +105,6 @@ func (ag *AggGate) distribute(msg MQTT.Message) {
 	}
 }
 
-
 func (ag *AggGate) OnPacket(nbytes int, buffer []byte, conn uConn, remote uAddr) {
 	fmt.Println("OnPacket!")
 	fmt.Printf("bytes: %s\n", utils.Bytes2str(buffer[0:nbytes]))
