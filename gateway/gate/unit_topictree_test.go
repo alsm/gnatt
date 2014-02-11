@@ -549,3 +549,76 @@ func Test_SubscribersOf_multi(t *testing.T) {
 	alen(0, len(tt.SubscribersOf("a/b/c/d/e")), 16, t)
 	alen(0, len(tt.SubscribersOf("a/b/c/d/e/f")), 17, t)
 }
+
+func Test_RemoveSubscription_rs1(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c1 := NewClient("c1", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c1, "a")
+	alen(1, len(tt.SubscribersOf("a")), 1, t)
+
+	tt.RemoveSubscription(c1, "a")
+	alen(0, len(tt.SubscribersOf("a")), 2, t)
+}
+
+func Test_RemoveSubscription_rs2(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c1 := NewClient("c1", conn, addr)
+	c2 := NewClient("c2", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c1, "/alpha/beta")
+	tt.AddSubscription(c2, "/alpha/beta")
+	alen(2, len(tt.SubscribersOf("/alpha/beta")), 1, t)
+
+	tt.RemoveSubscription(c2, "/alpha/beta")
+	alen(1, len(tt.SubscribersOf("/alpha/beta")), 2, t)
+
+	tt.RemoveSubscription(c2, "/alpha/beta")
+	alen(1, len(tt.SubscribersOf("/alpha/beta")), 3, t)
+
+	tt.RemoveSubscription(c1, "/alpha/beta")
+	alen(0, len(tt.SubscribersOf("/alpha/beta")), 4, t)
+}
+
+func Test_RemoveSubscription_rs3(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c1 := NewClient("c1", conn, addr)
+	c2 := NewClient("c2", conn, addr)
+	c3 := NewClient("c3", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c1, "/alpha/+/gamma")
+	tt.AddSubscription(c2, "/alpha/beta")
+	alen(1, len(tt.SubscribersOf("/alpha/beta")), 1, t)
+	alen(1, len(tt.SubscribersOf("/alpha/beta/gamma")), 2, t)
+
+	tt.RemoveSubscription(c1, "/alpha/+/gamma")
+	alen(1, len(tt.SubscribersOf("/alpha/beta")), 3, t)
+	alen(0, len(tt.SubscribersOf("/alpha/beta/gamma")), 4, t)
+
+	tt.AddSubscription(c3, "/alpha/#")
+	alen(2, len(tt.SubscribersOf("/alpha/beta")), 5, t)
+	alen(1, len(tt.SubscribersOf("/alpha/foo")), 6, t)
+
+	tt.RemoveSubscription(c2, "/alpha/beta")
+	alen(1, len(tt.SubscribersOf("/alpha/beta")), 7, t)
+	alen(1, len(tt.SubscribersOf("/alpha/zoo")), 8, t)
+	alen(1, len(tt.SubscribersOf("/alpha/beta/gamma")), 9, t)
+	alen(1, len(tt.SubscribersOf("/alpha/beta/gamma/zeta")), 10, t)
+	alen(0, len(tt.SubscribersOf("/alpha")), 11, t)
+
+	tt.RemoveSubscription(c3, "/alpha/beta")
+	alen(1, len(tt.SubscribersOf("/alpha/beta")), 12, t)
+	alen(0, len(tt.SubscribersOf("/alpha")), 13, t)
+
+	tt.RemoveSubscription(c3, "/alpha/#")
+	alen(0, len(tt.SubscribersOf("/alpha/beta")), 14, t)
+	alen(0, len(tt.SubscribersOf("/alpha/gamma")), 15, t)
+	alen(0, len(tt.SubscribersOf("/alpha/beta/gamma")), 16, t)
+	alen(0, len(tt.SubscribersOf("/alpha")), 17, t)
+}

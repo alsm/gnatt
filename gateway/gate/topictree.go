@@ -74,13 +74,38 @@ func (tt *TopicTree) AddSubscription(client *Client, topic string) (bool, error)
 	}
 }
 
-func (tt *TopicTree) RemoveSubscription(s *Client, topicId ...uint16) error {
+// topic could contain wild cards, however we do only consider the literal
+// topic string - (wilds are not evaluated for this)
+func (tt *TopicTree) RemoveSubscription(s *Client, topic string) {
 	defer tt.Unlock()
 	tt.Lock()
-	return nil
+	levels := strings.Split(topic, "/")
+	n := tt.root
+	for _, level := range levels {
+		if n = n.children[level]; n == nil {
+			fmt.Printf("no subscription exists \"%s\"\n", topic)
+			return
+		}
+	}
+	if len(n.clients) < 1 {
+		fmt.Printf("no clients of subscription \"%s\"\n", topic)
+	} else {
+		for i := 0; i < len(n.clients); i++ {
+			if n.clients[i].ClientId == s.ClientId {
+				// inexpensive way of removing from a slice
+				n.clients[i] = n.clients[len(n.clients)-1]
+				n.clients = n.clients[0 : len(n.clients)-1]
+				fmt.Printf("deleted subscription of client \"%s\"\n", s.ClientId)
+				return
+			}
+		}
+		fmt.Printf("client \"%s\" was not subscribed to \"%s\"\n", s.ClientId, topic)
+	}
 }
 
 // topic MUST be valid (ie no wild cards, no empty level, no ending slash)
+/***! Hey dipstick, read the above comment, !***/
+/***! that's where your bug is coming from. !***/
 func (tt *TopicTree) SubscribersOf(topic string) (clients []*Client) {
 	defer tt.RUnlock()
 	tt.RLock()
