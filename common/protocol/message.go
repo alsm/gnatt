@@ -450,12 +450,44 @@ func (c *ConnectMessage) SetProtocolId(protocolId byte) *ConnectMessage {
 	return c
 }
 
-func (c *ConnectMessage) Pack() []byte {
-	return c.PackHeader()
+func (c *ConnectMessage) decodeFlags(b byte) (willed, cleansess bool) {
+	if b&0x02 > 0 {
+		willed = true
+	}
+	if b&0x01 > 0 {
+		cleansess = true
+	}
+	return willed, cleansess
 }
 
-func (c *ConnectMessage) Unpack(msg []byte) Message {
-	msg = c.UnpackHeader(msg)
+func (c *ConnectMessage) encodeFlags() byte {
+	var b byte
+	if c.Will() {
+		b |= 0x02
+	}
+	if c.CleanSession() {
+		b |= 0x01
+	}
+	return b
+}
+
+func (c *ConnectMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, c.PackHeader()...)
+	bytes = append(bytes, c.encodeFlags())
+	bytes = append(bytes, c.ProtocolId())
+	bytes = append(bytes, U162b(c.duration.Duration())...)
+	bytes = append(bytes, c.clientId.ClientId()...)
+	return bytes
+}
+
+func (c *ConnectMessage) Unpack(bytes []byte) Message {
+	bytes = c.UnpackHeader(bytes)
+	willed, cleansess := c.decodeFlags(bytes[0])
+	c.SetWill(willed)
+	c.SetCleanSession(cleansess)
+	c.SetProtocolId(bytes[1])
+	c.SetDuration(B2u16(bytes[2:4]))
+	c.SetClientId(bytes[4:])
 	return c
 }
 
@@ -815,15 +847,15 @@ func (s *SubscribeMessage) Unpack(bytes []byte) Message {
 
 	if s.TopicIdType() == 0 { // TODO: make an enum
 		fmt.Println("topic id type 0 (name)")
-		s.SetTopicName(bytes[5-x:len(bytes)])
+		s.SetTopicName(bytes[5-x : len(bytes)])
 	} else if s.TopicIdType() == 1 {
 		fmt.Println("topic id type 1 (pre-defined)")
-		s.SetTopicId(B2u16(bytes[5-x:7-x]))
+		s.SetTopicId(B2u16(bytes[5-x : 7-x]))
 	} else {
 		fmt.Println("topic id type 2 (short name)")
-		s.SetTopicName(bytes[5-x:7-x])
+		s.SetTopicName(bytes[5-x : 7-x])
 	}
-	s.SetMsgId(B2u16(bytes[3-x:5-x]))
+	s.SetMsgId(B2u16(bytes[3-x : 5-x]))
 
 	return s
 }

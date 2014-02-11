@@ -13,6 +13,7 @@ type Client struct {
 }
 
 func NewClient(id string, c uConn, a uAddr) *Client {
+	fmt.Printf("NewClient, id: \"%s\"\n", id)
 	return &Client{
 		id,
 		c,

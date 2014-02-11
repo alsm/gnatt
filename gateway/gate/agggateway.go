@@ -35,6 +35,7 @@ func NewAggGate(gc *GatewayConfig, stopsig chan os.Signal) *AggGate {
 	if gc.mqtttimeout > 0 {
 		opts.SetTimeout(uint(gc.mqtttimeout))
 	}
+	opts.SetTraceLevel(MQTT.Warn)
 	client := MQTT.NewClient(opts)
 	ag := &AggGate{
 		client,
@@ -93,7 +94,7 @@ func (ag *AggGate) awaitStop() {
 
 func (ag *AggGate) distribute(msg MQTT.Message) {
 	topic := msg.Topic()
-	fmt.Println("AG distributing a msg for topic %s\n", topic)
+	fmt.Printf("AG distributing a msg for topic \"%s\"\n", topic)
 
 	// collect a list of clients to which msg should be
 	// published
@@ -101,7 +102,8 @@ func (ag *AggGate) distribute(msg MQTT.Message) {
 
 	clients := ag.tTree.SubscribersOf(topic)
 	for i, client := range clients {
-		fmt.Printf("publishing [%d] to client: %s\n", i, client)
+		fmt.Printf("publish (#%d) to client: %s\n", i, client.ClientId)
+		// todo: do an sn - publish to the client
 	}
 }
 
@@ -186,6 +188,10 @@ func (ag *AggGate) handle_CONNECT(m Message, c uConn, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	cm, _ := m.(*ConnectMessage)
 	clientid := string(cm.ClientId())
+	if clientid == "" {
+		fmt.Println("CONNECT with no client id rejected")
+		return
+	}
 	fmt.Printf("clientid: %s\n", clientid)
 	fmt.Printf("remoteaddr: %s\n", r.r)
 	fmt.Printf("will: %v\n", cm.Will())
