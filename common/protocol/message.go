@@ -119,9 +119,9 @@ func NewMessage(msgType MsgType) (m Message) {
 	case UNSUBACK:
 		m = new(unsubackMessage)
 	case PINGREQ:
-		m = new(pingreqMessage)
+		m = new(PingreqMessage)
 	case PINGRESP:
-		m = new(pingrespMessage)
+		m = new(PingrespMessage)
 	case DISCONNECT:
 		m = new(DisconnectMessage)
 	case WILLTOPICUPD:
@@ -323,6 +323,10 @@ func (c *clientId) ClientId() []byte {
 
 func (c *clientId) SetClientId(clientId []byte) {
 	c.clientId = clientId
+}
+
+func (c *clientId) IsNil() bool {
+	return len(c.clientId) == 0
 }
 
 /*************
@@ -957,16 +961,24 @@ func (u *unsubackMessage) Unpack(msg []byte) Message {
  * Pingreq *
  ***********/
 
-type pingreqMessage struct {
+type PingreqMessage struct {
 	Header
 	clientId
 }
 
-func (p *pingreqMessage) Pack() []byte {
-	return p.PackHeader()
+func (p *PingreqMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, p.PackHeader()...)
+	if !p.clientId.IsNil() {
+		bytes = append(bytes, p.ClientId()...)
+	}
+	return
 }
 
-func (p *pingreqMessage) Unpack(msg []byte) Message {
+func (p *PingreqMessage) Unpack(msg []byte) Message {
+	msg = p.UnpackHeader(msg)
+	if len(msg) > 0 {
+		p.SetClientId(msg)
+	}
 	return p
 }
 
@@ -974,15 +986,22 @@ func (p *pingreqMessage) Unpack(msg []byte) Message {
  * Pingresp *
  ************/
 
-type pingrespMessage struct {
+type PingrespMessage struct {
 	Header
 }
 
-func (p *pingrespMessage) Pack() []byte {
+func NewPingResp() *PingrespMessage {
+	var pm PingrespMessage
+	pm.SetLength(2)
+	pm.SetMsgType(PINGRESP)
+	return &pm
+}
+
+func (p *PingrespMessage) Pack() []byte {
 	return p.PackHeader()
 }
 
-func (p *pingrespMessage) Unpack(msg []byte) Message {
+func (p *PingrespMessage) Unpack(msg []byte) Message {
 	return p
 }
 

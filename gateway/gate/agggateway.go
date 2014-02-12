@@ -174,7 +174,7 @@ func (ag *AggGate) OnPacket(nbytes int, buffer []byte, conn uConn, remote uAddr)
 	case UNSUBACK:
 		ag.handle_UNSUBACK(m, remote)
 	case PINGREQ:
-		ag.handle_PINGREQ(m, remote)
+		ag.handle_PINGREQ(m, conn, remote)
 	case PINGRESP:
 		ag.handle_PINGRESP(m, remote)
 	case DISCONNECT:
@@ -366,8 +366,15 @@ func (ag *AggGate) handle_UNSUBACK(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
-func (ag *AggGate) handle_PINGREQ(m Message, r uAddr) {
+func (ag *AggGate) handle_PINGREQ(m Message, c uConn, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	resp := NewPingResp()
+
+	if nbytes, err := c.c.WriteToUDP(resp.Pack(), r.r); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("PINGRESP sent %d bytes\n", nbytes)
+	}
 }
 
 func (ag *AggGate) handle_PINGRESP(m Message, r uAddr) {
