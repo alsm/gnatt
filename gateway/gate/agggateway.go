@@ -101,9 +101,27 @@ func (ag *AggGate) distribute(msg MQTT.Message) {
 	// then publish msg to those clients (async)
 
 	clients := ag.tTree.SubscribersOf(topic)
-	for i, client := range clients {
-		fmt.Printf("publish (#%d) to client: %s\n", i, client.ClientId)
-		// todo: do an sn - publish to the client
+	for _, client := range clients {
+		go ag.publish(msg, client)
+	}
+}
+
+func (ag *AggGate) publish(msg MQTT.Message, client *Client) {
+	fmt.Printf("publish to client \"%s\"... ", client.ClientId)
+	dup := msg.DupFlag()
+	qos := QoS(msg.QoS()) // todo: what to do for qos > 0?
+	ret := msg.RetainedFlag()
+	top := msg.Topic()
+	pay := msg.Payload()
+	topicid := ag.tIndex.getId(top)
+	topicidtype := byte(0x00) // todo: pre-defined (1) and shortname (2)
+	msgid := uint16(0x00)     // todo: what should this be??
+	pm := NewPublishMessage(dup, ret, qos, topicidtype, topicid, msgid, pay)
+
+	if err := client.Write(pm); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("published")
 	}
 }
 
