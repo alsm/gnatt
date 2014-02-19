@@ -1116,7 +1116,7 @@ func (c *WillTopicUpdateMessage) decodeFlags(b byte) (q qoS, r retain) {
 }
 
 func (w *WillTopicUpdateMessage) Pack() (bytes []byte) {
-	bytes = append(bytes,  w.PackHeader()...)
+	bytes = append(bytes, w.PackHeader()...)
 	bytes = append(bytes, w.encodeFlags())
 	bytes = append(bytes, w.WillTopic()...)
 	return bytes
@@ -1183,7 +1183,7 @@ type WillMsgRespMessage struct {
 }
 
 func (w *WillMsgRespMessage) Pack() (bytes []byte) {
-	bytes = append(bytes,  w.PackHeader()...)
+	bytes = append(bytes, w.PackHeader()...)
 	bytes = append(bytes, w.MsgReturnCode())
 	return bytes
 }
