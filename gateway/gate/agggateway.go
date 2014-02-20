@@ -118,10 +118,22 @@ func (ag *AggGate) publish(msg MQTT.Message, client *Client) {
 	msgid := uint16(0x00)     // todo: what should this be??
 	pm := NewPublishMessage(dup, ret, qos, topicidtype, topicid, msgid, pay)
 
-	if err := client.Write(pm); err != nil {
-		fmt.Println(err)
+	if client.Registered(topicid) {
+		fmt.Printf("client \"%s\" already registered to %d, publish ahoy!\n", client, topicid)
+		if err := client.Write(pm); err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Printf("published a message to \"%s\"\n", client)
+		}
 	} else {
-		fmt.Println("published")
+		fmt.Printf("client \"%s\" is not registered to %d, must REGISTER first\n", client, topicid)
+		rm := NewRegisterMessage(topicid, msgid, top)
+		client.AddPendingMessage(pm)
+		if err := client.Write(rm); err != nil {
+			fmt.Printf("error writing REGISTER to \"%s\"\n", client)
+		} else {
+			fmt.Printf("sent REGISTER to \"%s\" for %d (%d bytes)\n", client, topicid, rm.Length())
+		}
 	}
 }
 
@@ -264,20 +276,38 @@ func (ag *AggGate) handle_REGISTER(m Message, c uConn, r uAddr) {
 		topicid = ag.tIndex.getId(topic)
 	}
 
+	client := ag.clients.GetClient(r)
+	client.Register(topicid)
+
 	fmt.Printf("ag topicid: %d\n", topicid)
 
 	ra := NewRegackMessage(topicid, rm.MsgId(), 0)
 	fmt.Printf("ra.MsgId: %d\n", ra.MsgId())
 
-	if nbytes, err := c.c.WriteToUDP(ra.Pack(), r.r); err != nil {
+	if err := client.Write(ra); err != nil {
 		fmt.Println(err)
 	} else {
-		fmt.Printf("REGACK sent %d bytes\n", nbytes)
+		fmt.Printf("REGACK sent")
 	}
 }
 
 func (ag *AggGate) handle_REGACK(m Message, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	// the gateway sends a register when there is a message
+	// that needs to be published, so we do that now
+	ra := m.(*RegackMessage)
+	topicid := ra.TopicId()
+	client := ag.clients.GetClient(r)
+	pm := client.FetchPendingMessage(topicid)
+	if pm == nil {
+		fmt.Printf("no pending message for %s id %d\n", client, topicid)
+	} else {
+		if err := client.Write(pm); err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Printf("published a pending message to \"%s\"\n", client)
+		}
+	}
 }
 
 func (ag *AggGate) handle_PUBLISH(m Message, r uAddr) {
@@ -317,13 +347,13 @@ func (ag *AggGate) handle_SUBSCRIBE(m Message, c uConn, r uAddr) {
 	sm := m.(*SubscribeMessage)
 	fmt.Printf("sm.TopicIdType: %d\n", sm.TopicIdType())
 	topic := string(sm.TopicName())
-	var topid uint16
+	var topicid uint16
 	if sm.TopicIdType() == 0 {
 		fmt.Printf("sm.TopicName: %s\n", topic)
 		if !ContainsWildcard(topic) {
-			topid = ag.tIndex.getId(topic)
-			if topid == 0 {
-				topid = ag.tIndex.putTopic(topic)
+			topicid = ag.tIndex.getId(topic)
+			if topicid == 0 {
+				topicid = ag.tIndex.putTopic(topic)
 			}
 		} else {
 			// todo: if topic contains wildcard, something about REGISTER
@@ -345,7 +375,8 @@ func (ag *AggGate) handle_SUBSCRIBE(m Message, c uConn, r uAddr) {
 			}
 		}
 		// AG is subscribed at this point
-		suba := NewSubackMessage(0, sm.QoS(), topid, sm.MsgId())
+		client.Register(topicid)
+		suba := NewSubackMessage(0, sm.QoS(), topicid, sm.MsgId())
 		if nbytes, err := c.c.WriteToUDP(suba.Pack(), r.r); err != nil {
 			fmt.Println(err)
 		} else {

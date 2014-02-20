@@ -614,8 +614,23 @@ type RegisterMessage struct {
 	topicName
 }
 
-func (r *RegisterMessage) Pack() (msg []byte) {
-	return r.PackHeader()
+func NewRegisterMessage(topicId, msgId uint16, topic string) *RegisterMessage {
+	tb := []byte(topic)
+	var rm RegisterMessage
+	rm.SetLength(6 + len(tb)) // todo: what if length bytes == 3
+	rm.SetMsgType(REGISTER)
+	rm.SetTopicId(topicId)
+	rm.SetMsgId(msgId)
+	rm.SetTopicName(tb)
+	return &rm
+}
+
+func (r *RegisterMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, r.PackHeader()...)
+	bytes = append(bytes, U162b(r.TopicId())...)
+	bytes = append(bytes, U162b(r.MsgId())...)
+	bytes = append(bytes, r.TopicName()...)
+	return bytes
 }
 
 func (r *RegisterMessage) Unpack(msg []byte) Message {
@@ -656,6 +671,10 @@ func (r *RegackMessage) Pack() (bytes []byte) {
 }
 
 func (r *RegackMessage) Unpack(msg []byte) Message {
+	msg = r.UnpackHeader(msg)
+	r.SetTopicId(B2u16(msg[0:2]))
+	r.SetMsgId(B2u16(msg[2:4]))
+	r.SetMsgReturnCode(msg[4])
 	return r
 }
 
