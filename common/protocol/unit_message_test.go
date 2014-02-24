@@ -116,7 +116,7 @@ func Test_Length(t *testing.T) {
 func Test_NewAdvertiseMessage(t *testing.T) {
 	am := NewMessage(ADVERTISE)
 	switch am.(type) {
-	case *advertiseMessage:
+	case *AdvertiseMessage:
 
 	default:
 		t.Errorf("msg should be *advertiseMessage")
@@ -126,7 +126,7 @@ func Test_NewAdvertiseMessage(t *testing.T) {
 func Test_NewSearchGwMessage(t *testing.T) {
 	sm := NewMessage(SEARCHGW)
 	switch sm.(type) {
-	case *searchgwMessage:
+	case *SearchgwMessage:
 
 	default:
 		t.Errorf("msg should be *searchgwMessage")
@@ -136,7 +136,7 @@ func Test_NewSearchGwMessage(t *testing.T) {
 func Test_NewGwInfoMessage(t *testing.T) {
 	gm := NewMessage(GWINFO)
 	switch gm.(type) {
-	case *gwInfoMessage:
+	case *GwInfoMessage:
 
 	default:
 		t.Errorf("msg should be *gwInfoMessage")
@@ -146,7 +146,7 @@ func Test_NewGwInfoMessage(t *testing.T) {
 func Test_NewConnectMessage(t *testing.T) {
 	cm := NewMessage(CONNECT)
 	switch cm.(type) {
-	case *connectMessage:
+	case *ConnectMessage:
 
 	default:
 		t.Errorf("msg should be *connectMessage")
@@ -156,7 +156,7 @@ func Test_NewConnectMessage(t *testing.T) {
 func Test_NewConnackMessage(t *testing.T) {
 	cm := NewMessage(CONNACK)
 	switch cm.(type) {
-	case *connackMessage:
+	case *ConnackMessage:
 
 	default:
 		t.Errorf("msg should be *connackMessage")
@@ -166,7 +166,7 @@ func Test_NewConnackMessage(t *testing.T) {
 func Test_NewWillTopicReqMessage(t *testing.T) {
 	wm := NewMessage(WILLTOPICREQ)
 	switch wm.(type) {
-	case *willTopicReqMessage:
+	case *WillTopicReqMessage:
 
 	default:
 		t.Errorf("msg should be *willTopicReqMessage")
@@ -176,7 +176,7 @@ func Test_NewWillTopicReqMessage(t *testing.T) {
 func Test_NewWillTopicMessage(t *testing.T) {
 	m := NewMessage(WILLTOPIC)
 	switch wtm := m.(type) {
-	case *willTopicMessage:
+	case *WillTopicMessage:
 		if wtm.QoS() != QoS_Zero {
 			t.Errorf("default QoS should be QoS_Zero, got %d", wtm.QoS())
 		}
@@ -189,7 +189,7 @@ func Test_NewWillTopicMessage(t *testing.T) {
 func Test_NewWillMsgReqMessage(t *testing.T) {
 	wm := NewMessage(WILLMSGREQ)
 	switch wm.(type) {
-	case *willMsgReqMessage:
+	case *WillMsgReqMessage:
 
 	default:
 		t.Errorf("msg should be *willMsgReqMessage")
@@ -199,7 +199,7 @@ func Test_NewWillMsgReqMessage(t *testing.T) {
 func Test_NewWillMsgMessage(t *testing.T) {
 	wm := NewMessage(WILLMSG)
 	switch wm.(type) {
-	case *willMsgMessage:
+	case *WillMsgMessage:
 
 	default:
 		t.Errorf("msg should be *willMsgMessage")
@@ -209,7 +209,7 @@ func Test_NewWillMsgMessage(t *testing.T) {
 func Test_NewRegisterMessage(t *testing.T) {
 	rm := NewMessage(REGISTER)
 	switch rm.(type) {
-	case *registerMessage:
+	case *RegisterMessage:
 
 	default:
 		t.Errorf("msg should be *registerMessage")
@@ -219,7 +219,7 @@ func Test_NewRegisterMessage(t *testing.T) {
 func Test_NewRegackMessage(t *testing.T) {
 	rm := NewMessage(REGACK)
 	switch rm.(type) {
-	case *regackMessage:
+	case *RegackMessage:
 
 	default:
 		t.Errorf("msg should be *regackMessage")
@@ -229,7 +229,7 @@ func Test_NewRegackMessage(t *testing.T) {
 func Test_NewPublishMessage(t *testing.T) {
 	pm := NewMessage(PUBLISH)
 	switch pm.(type) {
-	case *publishMessage:
+	case *PublishMessage:
 
 	default:
 		t.Errorf("msg should be *publishMessage")
@@ -239,7 +239,7 @@ func Test_NewPublishMessage(t *testing.T) {
 func Test_NewPubackMessage(t *testing.T) {
 	pm := NewMessage(PUBACK)
 	switch pm.(type) {
-	case *pubackMessage:
+	case *PubackMessage:
 
 	default:
 		t.Errorf("msg should be *pubackMessage")
@@ -249,7 +249,7 @@ func Test_NewPubackMessage(t *testing.T) {
 func Test_NewPubcompMessage(t *testing.T) {
 	pm := NewMessage(PUBCOMP)
 	switch pm.(type) {
-	case *pubcompMessage:
+	case *PubcompMessage:
 
 	default:
 		t.Errorf("msg should be *pubcompMessage")
@@ -259,7 +259,7 @@ func Test_NewPubcompMessage(t *testing.T) {
 func Test_NewPubrecMessage(t *testing.T) {
 	pm := NewMessage(PUBREC)
 	switch pm.(type) {
-	case *pubrecMessage:
+	case *PubrecMessage:
 
 	default:
 		t.Errorf("msg should be *pubrecMessage")
@@ -269,7 +269,7 @@ func Test_NewPubrecMessage(t *testing.T) {
 func Test_NewPubrelMessage(t *testing.T) {
 	pm := NewMessage(PUBREL)
 	switch pm.(type) {
-	case *pubrelMessage:
+	case *PubrelMessage:
 
 	default:
 		t.Errorf("msg should be *pubrelMessage")
@@ -279,7 +279,7 @@ func Test_NewPubrelMessage(t *testing.T) {
 func Test_NewSubscribeMessage(t *testing.T) {
 	sm := NewMessage(SUBSCRIBE)
 	switch sm.(type) {
-	case *subscribeMessage:
+	case *SubscribeMessage:
 
 	default:
 		t.Errorf("msg should be *subscribeMessage")
@@ -289,7 +289,7 @@ func Test_NewSubscribeMessage(t *testing.T) {
 func Test_NewSubackMessage(t *testing.T) {
 	sm := NewMessage(SUBACK)
 	switch sm.(type) {
-	case *subackMessage:
+	case *SubackMessage:
 
 	default:
 		t.Errorf("msg should be *subackMessage")
@@ -299,7 +299,7 @@ func Test_NewSubackMessage(t *testing.T) {
 func Test_NewUnsubscribeMessage(t *testing.T) {
 	sm := NewMessage(UNSUBSCRIBE)
 	switch sm.(type) {
-	case *unsubscribeMessage:
+	case *UnsubscribeMessage:
 
 	default:
 		t.Errorf("msg should be *unsubscribeMessage")
@@ -309,7 +309,7 @@ func Test_NewUnsubscribeMessage(t *testing.T) {
 func Test_NewUnsubackMessage(t *testing.T) {
 	sm := NewMessage(UNSUBACK)
 	switch sm.(type) {
-	case *unsubackMessage:
+	case *UnsubackMessage:
 
 	default:
 		t.Errorf("msg should be *unsubackMessage")
@@ -319,7 +319,7 @@ func Test_NewUnsubackMessage(t *testing.T) {
 func Test_NewPingreqMessage(t *testing.T) {
 	pm := NewMessage(PINGREQ)
 	switch pm.(type) {
-	case *pingreqMessage:
+	case *PingreqMessage:
 
 	default:
 		t.Errorf("msg should be *pingreqMessage")
@@ -329,7 +329,7 @@ func Test_NewPingreqMessage(t *testing.T) {
 func Test_NewPingrespMessage(t *testing.T) {
 	pm := NewMessage(PINGRESP)
 	switch pm.(type) {
-	case *pingrespMessage:
+	case *PingrespMessage:
 
 	default:
 		t.Errorf("msg should be *pingrespMessage")
@@ -339,7 +339,7 @@ func Test_NewPingrespMessage(t *testing.T) {
 func Test_NewDisconnectMessage(t *testing.T) {
 	dm := NewMessage(DISCONNECT)
 	switch dm.(type) {
-	case *disconnectMessage:
+	case *DisconnectMessage:
 
 	default:
 		t.Errorf("msg should be *disconnectMessage")
@@ -349,7 +349,7 @@ func Test_NewDisconnectMessage(t *testing.T) {
 func Test_NewWillTopicUpdateMessage(t *testing.T) {
 	wm := NewMessage(WILLTOPICUPD)
 	switch wm.(type) {
-	case *willTopicUpdateMessage:
+	case *WillTopicUpdateMessage:
 
 	default:
 		t.Errorf("msg should be *willTopicUpdateMessage")
@@ -359,7 +359,7 @@ func Test_NewWillTopicUpdateMessage(t *testing.T) {
 func Test_NewWillTopicRespMessage(t *testing.T) {
 	wm := NewMessage(WILLTOPICRESP)
 	switch wm.(type) {
-	case *willTopicRespMessage:
+	case *WillTopicRespMessage:
 
 	default:
 		t.Errorf("msg should be *willTopicRespMessage")
@@ -369,7 +369,7 @@ func Test_NewWillTopicRespMessage(t *testing.T) {
 func Test_NewWillMsgUpdateMessage(t *testing.T) {
 	wm := NewMessage(WILLMSGUPD)
 	switch wm.(type) {
-	case *willMsgUpdateMessage:
+	case *WillMsgUpdateMessage:
 
 	default:
 		t.Errorf("msg should be *willMsgUpdateMessage")
@@ -379,7 +379,7 @@ func Test_NewWillMsgUpdateMessage(t *testing.T) {
 func Test_NewWillMsgRespMessage(t *testing.T) {
 	wm := NewMessage(WILLMSGRESP)
 	switch wm.(type) {
-	case *willMsgRespMessage:
+	case *WillMsgRespMessage:
 
 	default:
 		t.Errorf("msg should be *willMsgRespMessage")

@@ -81,21 +81,21 @@ func NewMessage(msgType MsgType) (m Message) {
 	case ADVERTISE:
 		m = new(AdvertiseMessage)
 	case SEARCHGW:
-		m = new(searchgwMessage)
+		m = new(SearchgwMessage)
 	case GWINFO:
-		m = new(gwInfoMessage)
+		m = new(GwInfoMessage)
 	case CONNECT:
 		m = new(ConnectMessage)
 	case CONNACK:
 		m = new(ConnackMessage)
 	case WILLTOPICREQ:
-		m = new(willTopicReqMessage)
+		m = new(WillTopicReqMessage)
 	case WILLTOPIC:
-		m = new(willTopicMessage)
+		m = new(WillTopicMessage)
 	case WILLMSGREQ:
-		m = new(willMsgReqMessage)
+		m = new(WillMsgReqMessage)
 	case WILLMSG:
-		m = new(willMsgMessage)
+		m = new(WillMsgMessage)
 	case REGISTER:
 		m = new(RegisterMessage)
 	case REGACK:
@@ -103,21 +103,21 @@ func NewMessage(msgType MsgType) (m Message) {
 	case PUBLISH:
 		m = new(PublishMessage)
 	case PUBACK:
-		m = new(pubackMessage)
+		m = new(PubackMessage)
 	case PUBCOMP:
-		m = new(pubcompMessage)
+		m = new(PubcompMessage)
 	case PUBREC:
-		m = new(pubrecMessage)
+		m = new(PubrecMessage)
 	case PUBREL:
-		m = new(pubrelMessage)
+		m = new(PubrelMessage)
 	case SUBSCRIBE:
 		m = new(SubscribeMessage)
 	case SUBACK:
 		m = new(SubackMessage)
 	case UNSUBSCRIBE:
-		m = new(unsubscribeMessage)
+		m = new(UnsubscribeMessage)
 	case UNSUBACK:
-		m = new(unsubackMessage)
+		m = new(UnsubackMessage)
 	case PINGREQ:
 		m = new(PingreqMessage)
 	case PINGRESP:
@@ -125,13 +125,13 @@ func NewMessage(msgType MsgType) (m Message) {
 	case DISCONNECT:
 		m = new(DisconnectMessage)
 	case WILLTOPICUPD:
-		m = new(willTopicUpdateMessage)
+		m = new(WillTopicUpdateMessage)
 	case WILLTOPICRESP:
-		m = new(willTopicRespMessage)
+		m = new(WillTopicRespMessage)
 	case WILLMSGUPD:
-		m = new(willMsgUpdateMessage)
+		m = new(WillMsgUpdateMessage)
 	case WILLMSGRESP:
-		m = new(willMsgRespMessage)
+		m = new(WillMsgRespMessage)
 	}
 	return
 }
@@ -357,26 +357,26 @@ func (a *AdvertiseMessage) Unpack(msg []byte) Message {
  * Search GW *
  *************/
 
-type searchgwMessage struct {
+type SearchgwMessage struct {
 	Header
 	radius byte
 }
 
-func (s *searchgwMessage) Radius() byte {
+func (s *SearchgwMessage) Radius() byte {
 	return s.radius
 }
 
-func (s *searchgwMessage) SetRadius(radius byte) {
+func (s *SearchgwMessage) SetRadius(radius byte) {
 	s.radius = radius
 }
 
-func (s *searchgwMessage) Pack() (msg []byte) {
+func (s *SearchgwMessage) Pack() (msg []byte) {
 	msg = append(msg, s.PackHeader()...)
 	msg = append(msg, s.Radius())
 	return
 }
 
-func (s *searchgwMessage) Unpack(msg []byte) Message {
+func (s *SearchgwMessage) Unpack(msg []byte) Message {
 	msg = s.UnpackHeader(msg)
 	s.SetRadius(msg[0])
 	return Message(s)
@@ -386,28 +386,28 @@ func (s *searchgwMessage) Unpack(msg []byte) Message {
  * GW Info *
  ***********/
 
-type gwInfoMessage struct {
+type GwInfoMessage struct {
 	Header
 	gwId
 	gwAddress []byte
 }
 
-func (g *gwInfoMessage) GwAddress() []byte {
+func (g *GwInfoMessage) GwAddress() []byte {
 	return g.gwAddress
 }
 
-func (g *gwInfoMessage) SetGwAddress(gwAddress []byte) {
+func (g *GwInfoMessage) SetGwAddress(gwAddress []byte) {
 	g.gwAddress = gwAddress
 }
 
-func (g *gwInfoMessage) Pack() (msg []byte) {
+func (g *GwInfoMessage) Pack() (msg []byte) {
 	msg = append(msg, g.PackHeader()...)
 	msg = append(msg, g.GwId())
 	msg = append(msg, g.GwAddress()...)
 	return
 }
 
-func (g *gwInfoMessage) Unpack(msg []byte) Message {
+func (g *GwInfoMessage) Unpack(msg []byte) Message {
 	msg = g.UnpackHeader(msg)
 	g.SetGwId(msg[0])
 	g.SetGwAddress(msg[1:])
@@ -528,15 +528,15 @@ func (c *ConnackMessage) Unpack(msg []byte) Message {
  * Will Toipc Req *
  ******************/
 
-type willTopicReqMessage struct {
+type WillTopicReqMessage struct {
 	Header
 }
 
-func (w *willTopicReqMessage) Pack() []byte {
+func (w *WillTopicReqMessage) Pack() []byte {
 	return w.PackHeader()
 }
 
-func (w *willTopicReqMessage) Unpack(msg []byte) Message {
+func (w *WillTopicReqMessage) Unpack(msg []byte) Message {
 	_ = w.UnpackHeader(msg)
 	return w
 }
@@ -545,20 +545,20 @@ func (w *willTopicReqMessage) Unpack(msg []byte) Message {
  * Will Topic *
  **************/
 
-type willTopicMessage struct {
+type WillTopicMessage struct {
 	Header
 	qoS
 	willTopic
 }
 
-func (w *willTopicMessage) Pack() (msg []byte) {
-	msg = append(msg, w.PackHeader()...)
-	msg = append(msg, byte(w.QoS()))
-	msg = append(msg, w.WillTopic()...)
-	return
+func (w *WillTopicMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, w.PackHeader()...)
+	bytes = append(bytes, byte(w.QoS()))
+	bytes = append(bytes, w.WillTopic()...)
+	return bytes
 }
 
-func (w *willTopicMessage) Unpack(msg []byte) Message {
+func (w *WillTopicMessage) Unpack(msg []byte) Message {
 	msg = w.UnpackHeader(msg)
 	w.SetQoS(QoS(msg[0]))
 	w.SetWillTopic(msg[1:])
@@ -569,15 +569,15 @@ func (w *willTopicMessage) Unpack(msg []byte) Message {
  * Will Msg Req *
  ****************/
 
-type willMsgReqMessage struct {
+type WillMsgReqMessage struct {
 	Header
 }
 
-func (w *willMsgReqMessage) Pack() []byte {
+func (w *WillMsgReqMessage) Pack() []byte {
 	return w.PackHeader()
 }
 
-func (w *willMsgReqMessage) Unpack(msg []byte) Message {
+func (w *WillMsgReqMessage) Unpack(msg []byte) Message {
 	_ = w.UnpackHeader(msg)
 	return w
 }
@@ -586,18 +586,18 @@ func (w *willMsgReqMessage) Unpack(msg []byte) Message {
  * Will Msg *
  ************/
 
-type willMsgMessage struct {
+type WillMsgMessage struct {
 	Header
 	willMsg
 }
 
-func (w *willMsgMessage) Pack() (msg []byte) {
-	msg = append(msg, w.PackHeader()...)
-	msg = append(msg, w.WillMsg()...)
+func (w *WillMsgMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, w.PackHeader()...)
+	bytes = append(bytes, w.WillMsg()...)
 	return
 }
 
-func (w *willMsgMessage) Unpack(msg []byte) Message {
+func (w *WillMsgMessage) Unpack(msg []byte) Message {
 	msg = w.UnpackHeader(msg)
 	w.SetWillMsg(msg)
 	return w
@@ -614,8 +614,23 @@ type RegisterMessage struct {
 	topicName
 }
 
-func (r *RegisterMessage) Pack() (msg []byte) {
-	return r.PackHeader()
+func NewRegisterMessage(topicId, msgId uint16, topic string) *RegisterMessage {
+	tb := []byte(topic)
+	var rm RegisterMessage
+	rm.SetLength(6 + len(tb)) // todo: what if length bytes == 3
+	rm.SetMsgType(REGISTER)
+	rm.SetTopicId(topicId)
+	rm.SetMsgId(msgId)
+	rm.SetTopicName(tb)
+	return &rm
+}
+
+func (r *RegisterMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, r.PackHeader()...)
+	bytes = append(bytes, U162b(r.TopicId())...)
+	bytes = append(bytes, U162b(r.MsgId())...)
+	bytes = append(bytes, r.TopicName()...)
+	return bytes
 }
 
 func (r *RegisterMessage) Unpack(msg []byte) Message {
@@ -656,6 +671,10 @@ func (r *RegackMessage) Pack() (bytes []byte) {
 }
 
 func (r *RegackMessage) Unpack(msg []byte) Message {
+	msg = r.UnpackHeader(msg)
+	r.SetTopicId(B2u16(msg[0:2]))
+	r.SetMsgId(B2u16(msg[2:4]))
+	r.SetMsgReturnCode(msg[4])
 	return r
 }
 
@@ -727,17 +746,17 @@ func (p *PublishMessage) Pack() (bytes []byte) {
 	return bytes
 }
 
-func (p *PublishMessage) Unpack(bytes []byte) Message {
-	bytes = p.UnpackHeader(bytes)
-	d, q, r, t := p.decodeFlags(bytes[0])
+func (p *PublishMessage) Unpack(msg []byte) Message {
+	msg = p.UnpackHeader(msg)
+	d, q, r, t := p.decodeFlags(msg[0])
 	p.SetDUP(d.DUP())
 	p.SetQoS(q.QoS())
 	p.SetRetain(r.Retain())
 	p.SetTopicIdType(t.TopicIdType())
 
-	p.SetTopicId(B2u16(bytes[1:3]))
-	p.SetMsgId(B2u16(bytes[3:5]))
-	p.SetData(bytes[5:])
+	p.SetTopicId(B2u16(msg[1:3]))
+	p.SetMsgId(B2u16(msg[3:5]))
+	p.SetData(msg[5:])
 	return p
 }
 
@@ -745,18 +764,26 @@ func (p *PublishMessage) Unpack(bytes []byte) Message {
  * Puback *
  **********/
 
-type pubackMessage struct {
+type PubackMessage struct {
 	Header
 	topicId
 	msgId
 	msgReturnCode
 }
 
-func (p *pubackMessage) Pack() []byte {
-	return p.PackHeader()
+func (p *PubackMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, p.PackHeader()...)
+	bytes = append(bytes, U162b(p.TopicId())...)
+	bytes = append(bytes, U162b(p.MsgId())...)
+	bytes = append(bytes, p.MsgReturnCode())
+	return bytes
 }
 
-func (p *pubackMessage) Unpack(msg []byte) Message {
+func (p *PubackMessage) Unpack(msg []byte) Message {
+	msg = p.UnpackHeader(msg)
+	p.SetTopicId(B2u16(msg[0:2]))
+	p.SetMsgId(B2u16(msg[2:4]))
+	p.SetMsgReturnCode(msg[4])
 	return p
 }
 
@@ -764,16 +791,20 @@ func (p *pubackMessage) Unpack(msg []byte) Message {
  * Pubrec *
  **********/
 
-type pubrecMessage struct {
+type PubrecMessage struct {
 	Header
 	msgId
 }
 
-func (p *pubrecMessage) Pack() []byte {
-	return p.PackHeader()
+func (p *PubrecMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, p.PackHeader()...)
+	bytes = append(bytes, U162b(p.MsgId())...)
+	return bytes
 }
 
-func (p *pubrecMessage) Unpack(msg []byte) Message {
+func (p *PubrecMessage) Unpack(msg []byte) Message {
+	msg = p.UnpackHeader(msg)
+	p.SetMsgId(B2u16(msg[0:2]))
 	return p
 }
 
@@ -781,16 +812,20 @@ func (p *pubrecMessage) Unpack(msg []byte) Message {
  * Pubrel *
  **********/
 
-type pubrelMessage struct {
+type PubrelMessage struct {
 	Header
 	msgId
 }
 
-func (p *pubrelMessage) Pack() []byte {
-	return p.PackHeader()
+func (p *PubrelMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, p.PackHeader()...)
+	bytes = append(bytes, U162b(p.MsgId())...)
+	return bytes
 }
 
-func (p *pubrelMessage) Unpack(msg []byte) Message {
+func (p *PubrelMessage) Unpack(msg []byte) Message {
+	msg = p.UnpackHeader(msg)
+	p.SetMsgId(B2u16(msg[0:2]))
 	return p
 }
 
@@ -798,16 +833,20 @@ func (p *pubrelMessage) Unpack(msg []byte) Message {
  * Pubcomp *
  ***********/
 
-type pubcompMessage struct {
+type PubcompMessage struct {
 	Header
 	msgId
 }
 
-func (p *pubcompMessage) Pack() []byte {
-	return p.PackHeader()
+func (p *PubcompMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, p.PackHeader()...)
+	bytes = append(bytes, U162b(p.MsgId())...)
+	return bytes
 }
 
-func (p *pubcompMessage) Unpack(msg []byte) Message {
+func (p *PubcompMessage) Unpack(msg []byte) Message {
+	msg = p.UnpackHeader(msg)
+	p.SetMsgId(B2u16(msg[0:2]))
 	return p
 }
 
@@ -854,26 +893,26 @@ func (s *SubscribeMessage) Pack() (bytes []byte) {
 	return
 }
 
-func (s *SubscribeMessage) Unpack(bytes []byte) Message {
-	x := len(bytes)
-	bytes = s.UnpackHeader(bytes)
-	x = x - len(bytes)
-	d, q, t := s.decodeFlags(bytes[0])
+func (s *SubscribeMessage) Unpack(msg []byte) Message {
+	x := len(msg)
+	msg = s.UnpackHeader(msg)
+	x = x - len(msg)
+	d, q, t := s.decodeFlags(msg[0])
 	s.SetDUP(d.DUP())
 	s.SetQoS(q.QoS())
 	s.SetTopicIdType(t.TopicIdType())
 
 	if s.TopicIdType() == 0 { // TODO: make an enum
-		fmt.Println("topic id type 0 (name)")
-		s.SetTopicName(bytes[5-x : len(bytes)])
+		fmt.Println("sub topic id type 0 (name)")
+		s.SetTopicName(msg[5-x : len(msg)])
 	} else if s.TopicIdType() == 1 {
-		fmt.Println("topic id type 1 (pre-defined)")
-		s.SetTopicId(B2u16(bytes[5-x : 7-x]))
+		fmt.Println("sub topic id type 1 (pre-defined)")
+		s.SetTopicId(B2u16(msg[5-x : 7-x]))
 	} else {
-		fmt.Println("topic id type 2 (short name)")
-		s.SetTopicName(bytes[5-x : 7-x])
+		fmt.Println("sub topic id type 2 (short name)")
+		s.SetTopicName(msg[5-x : 7-x])
 	}
-	s.SetMsgId(B2u16(bytes[3-x : 5-x]))
+	s.SetMsgId(B2u16(msg[3-x : 5-x]))
 
 	return s
 }
@@ -924,7 +963,7 @@ func (s *SubackMessage) Unpack(msg []byte) Message {
  * Unsubscribe *
  ***************/
 
-type unsubscribeMessage struct {
+type UnsubscribeMessage struct {
 	Header
 	topicIdType
 	topicId
@@ -932,11 +971,48 @@ type unsubscribeMessage struct {
 	topicName
 }
 
-func (u *unsubscribeMessage) Pack() []byte {
+func (s *UnsubscribeMessage) encodeFlags() byte {
+	var b byte
+	b |= s.topicIdType.TopicIdType()
+	return b
+}
+
+func (s *UnsubscribeMessage) decodeFlags(b byte) (t topicIdType) {
+	t.SetTopicIdType(b & 0x03)
+	return
+}
+
+func (u *UnsubscribeMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, u.PackHeader()...)
+	bytes = append(bytes, u.encodeFlags())
+	bytes = append(bytes, U162b(u.MsgId())...)
+	if u.TopicIdType() == 0 {
+		bytes = append(bytes, u.TopicName()...)
+	} else {
+		bytes = append(bytes, U162b(u.TopicId())...)
+	}
 	return u.PackHeader()
 }
 
-func (u *unsubscribeMessage) Unpack(msg []byte) Message {
+func (u *UnsubscribeMessage) Unpack(msg []byte) Message {
+	x := len(msg)
+	msg = u.UnpackHeader(msg)
+	x = x - len(msg)
+	t := u.decodeFlags(msg[0])
+	u.SetTopicIdType(t.TopicIdType())
+
+	if u.TopicIdType() == 0 { // TODO: make an enum
+		fmt.Println("unsub topic id type 0 (name)")
+		u.SetTopicName(msg[5-x : len(msg)])
+	} else if u.TopicIdType() == 1 {
+		fmt.Println("unsub topic id type 1 (pre-defined)")
+		u.SetTopicId(B2u16(msg[5-x : 7-x]))
+	} else {
+		fmt.Println("unsub topic id type 2 (short name)")
+		u.SetTopicName(msg[5-x : 7-x])
+	}
+	u.SetMsgId(B2u16(msg[3-x : 5-x]))
+
 	return u
 }
 
@@ -944,16 +1020,20 @@ func (u *unsubscribeMessage) Unpack(msg []byte) Message {
  * Unsuback *
  ************/
 
-type unsubackMessage struct {
+type UnsubackMessage struct {
 	Header
 	msgId
 }
 
-func (u *unsubackMessage) Pack() []byte {
-	return u.PackHeader()
+func (u *UnsubackMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, u.PackHeader()...)
+	bytes = append(bytes, U162b(u.MsgId())...)
+	return bytes
 }
 
-func (u *unsubackMessage) Unpack(msg []byte) Message {
+func (u *UnsubackMessage) Unpack(msg []byte) Message {
+	msg = u.UnpackHeader(msg)
+	u.SetMsgId(B2u16(msg[0:2]))
 	return u
 }
 
@@ -1032,18 +1112,41 @@ func (d *DisconnectMessage) Unpack(msg []byte) Message {
  * Will Topic Update *
  *********************/
 
-type willTopicUpdateMessage struct {
+type WillTopicUpdateMessage struct {
 	Header
 	qoS
 	retain
 	willTopic
 }
 
-func (w *willTopicUpdateMessage) Pack() []byte {
-	return w.PackHeader()
+func (w *WillTopicUpdateMessage) encodeFlags() byte {
+	var b byte
+	b |= byte(w.qoS.QoS()) << 6
+	if w.retain.Retain() {
+		b |= (1 << 4)
+	}
+	return b
 }
 
-func (w *willTopicUpdateMessage) Unpack(msg []byte) Message {
+func (c *WillTopicUpdateMessage) decodeFlags(b byte) (q qoS, r retain) {
+	q.SetQoS(QoS(b & 0x60))
+	r.SetRetain((b & 0x10) == 1)
+	return q, r
+}
+
+func (w *WillTopicUpdateMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, w.PackHeader()...)
+	bytes = append(bytes, w.encodeFlags())
+	bytes = append(bytes, w.WillTopic()...)
+	return bytes
+}
+
+func (w *WillTopicUpdateMessage) Unpack(msg []byte) Message {
+	msg = w.UnpackHeader(msg)
+	q, r := w.decodeFlags(msg[0])
+	w.SetQoS(q.QoS())
+	w.SetRetain(r.Retain())
+	w.SetWillTopic(msg[1:])
 	return w
 }
 
@@ -1051,16 +1154,20 @@ func (w *willTopicUpdateMessage) Unpack(msg []byte) Message {
  * Will Msg Update *
  *******************/
 
-type willMsgUpdateMessage struct {
+type WillMsgUpdateMessage struct {
 	Header
 	willMsg
 }
 
-func (w *willMsgUpdateMessage) Pack() []byte {
-	return w.PackHeader()
+func (w *WillMsgUpdateMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, w.PackHeader()...)
+	bytes = append(bytes, w.WillMsg()...)
+	return bytes
 }
 
-func (w *willMsgUpdateMessage) Unpack(msg []byte) Message {
+func (w *WillMsgUpdateMessage) Unpack(msg []byte) Message {
+	msg = w.UnpackHeader(msg)
+	w.SetWillMsg(msg)
 	return w
 }
 
@@ -1068,16 +1175,20 @@ func (w *willMsgUpdateMessage) Unpack(msg []byte) Message {
  * Will Topic Resp *
  *******************/
 
-type willTopicRespMessage struct {
+type WillTopicRespMessage struct {
 	Header
 	msgReturnCode
 }
 
-func (w *willTopicRespMessage) Pack() []byte {
-	return w.PackHeader()
+func (w *WillTopicRespMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, w.PackHeader()...)
+	bytes = append(bytes, w.MsgReturnCode())
+	return bytes
 }
 
-func (w *willTopicRespMessage) Unpack(msg []byte) Message {
+func (w *WillTopicRespMessage) Unpack(msg []byte) Message {
+	msg = w.UnpackHeader(msg)
+	w.SetMsgReturnCode(msg[0])
 	return w
 }
 
@@ -1085,16 +1196,20 @@ func (w *willTopicRespMessage) Unpack(msg []byte) Message {
  * Will Msg Resp *
  *****************/
 
-type willMsgRespMessage struct {
+type WillMsgRespMessage struct {
 	Header
 	msgReturnCode
 }
 
-func (w *willMsgRespMessage) Pack() []byte {
-	return w.PackHeader()
+func (w *WillMsgRespMessage) Pack() (bytes []byte) {
+	bytes = append(bytes, w.PackHeader()...)
+	bytes = append(bytes, w.MsgReturnCode())
+	return bytes
 }
 
-func (w *willMsgRespMessage) Unpack(msg []byte) Message {
+func (w *WillMsgRespMessage) Unpack(msg []byte) Message {
+	msg = w.UnpackHeader(msg)
+	w.SetMsgReturnCode(msg[0])
 	return w
 }
 
