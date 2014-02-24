@@ -64,8 +64,8 @@ func Test_AddSubscription_alphaS(t *testing.T) {
 	c := NewClient("c2.5", conn, addr)
 	tt := NewTopicTree()
 	b, e := tt.AddSubscription(c, "alpha/")
-	enok(e, t)
-	chkb(b, false, t)
+	eok(e, t)
+	chkb(b, true, t)
 }
 
 func Test_AddSubscription_aSbScSd(t *testing.T) {
@@ -84,8 +84,8 @@ func Test_AddSubscription_aSSb(t *testing.T) {
 	c := NewClient("c4", conn, addr)
 	tt := NewTopicTree()
 	b, e := tt.AddSubscription(c, "a//b")
-	enok(e, t)
-	chkb(b, false, t)
+	eok(e, t)
+	chkb(b, true, t)
 }
 
 func Test_AddSubscription_H(t *testing.T) {
@@ -211,6 +211,13 @@ func Benchmark_AddSubscription(b *testing.B) {
 	}
 }
 
+func elen(clients []*Client, e error) int {
+	if clients == nil {
+		return -1
+	}
+	return len(clients)
+}
+
 func Test_SubscribersOf_none(t *testing.T) {
 	var conn uConn
 	var addr uAddr
@@ -218,68 +225,36 @@ func Test_SubscribersOf_none(t *testing.T) {
 	tt := NewTopicTree()
 
 	sum := 0
-	sum += len(tt.SubscribersOf("+"))
-	sum += len(tt.SubscribersOf("#"))
-	sum += len(tt.SubscribersOf("a"))
-	sum += len(tt.SubscribersOf("/+"))
-	sum += len(tt.SubscribersOf("/#"))
-	sum += len(tt.SubscribersOf("/a"))
+	sum += elen(tt.SubscribersOf("a"))
+	sum += elen(tt.SubscribersOf("/a"))
 
 	tt.AddSubscription(c, "kappa")
-	sum += len(tt.SubscribersOf("+"))
-	sum += len(tt.SubscribersOf("#"))
-	sum += len(tt.SubscribersOf("a"))
-	sum += len(tt.SubscribersOf("/+"))
-	sum += len(tt.SubscribersOf("/#"))
-	sum += len(tt.SubscribersOf("/a"))
+	sum += elen(tt.SubscribersOf("a"))
+	sum += elen(tt.SubscribersOf("/a"))
 
 	tt.AddSubscription(c, "/kappa")
-	sum += len(tt.SubscribersOf("+"))
-	sum += len(tt.SubscribersOf("#"))
-	sum += len(tt.SubscribersOf("a"))
-	sum += len(tt.SubscribersOf("/+"))
-	sum += len(tt.SubscribersOf("/#"))
-	sum += len(tt.SubscribersOf("/a"))
+	sum += elen(tt.SubscribersOf("a"))
+	sum += elen(tt.SubscribersOf("/a"))
 
 	tt.AddSubscription(c, "kappa/#")
-	sum += len(tt.SubscribersOf("+"))
-	sum += len(tt.SubscribersOf("#"))
-	sum += len(tt.SubscribersOf("a"))
-	sum += len(tt.SubscribersOf("/+"))
-	sum += len(tt.SubscribersOf("/#"))
-	sum += len(tt.SubscribersOf("/a"))
+	sum += elen(tt.SubscribersOf("a"))
+	sum += elen(tt.SubscribersOf("/a"))
 
 	tt.AddSubscription(c, "kappa/+")
-	sum += len(tt.SubscribersOf("+"))
-	sum += len(tt.SubscribersOf("#"))
-	sum += len(tt.SubscribersOf("a"))
-	sum += len(tt.SubscribersOf("/+"))
-	sum += len(tt.SubscribersOf("/#"))
-	sum += len(tt.SubscribersOf("/a"))
+	sum += elen(tt.SubscribersOf("a"))
+	sum += elen(tt.SubscribersOf("/a"))
 
 	tt.AddSubscription(c, "a/b")
-	sum += len(tt.SubscribersOf("+"))
-	sum += len(tt.SubscribersOf("#"))
-	sum += len(tt.SubscribersOf("a"))
-	sum += len(tt.SubscribersOf("/+"))
-	sum += len(tt.SubscribersOf("/#"))
-	sum += len(tt.SubscribersOf("/a"))
+	sum += elen(tt.SubscribersOf("a"))
+	sum += elen(tt.SubscribersOf("/a"))
 
 	tt.AddSubscription(c, "b/a")
-	sum += len(tt.SubscribersOf("+"))
-	sum += len(tt.SubscribersOf("#"))
-	sum += len(tt.SubscribersOf("a"))
-	sum += len(tt.SubscribersOf("/+"))
-	sum += len(tt.SubscribersOf("/#"))
-	sum += len(tt.SubscribersOf("/a"))
+	sum += elen(tt.SubscribersOf("a"))
+	sum += elen(tt.SubscribersOf("/a"))
 
 	tt.AddSubscription(c, "/a/#")
-	sum += len(tt.SubscribersOf("+"))
-	sum += len(tt.SubscribersOf("#"))
-	sum += len(tt.SubscribersOf("a"))
-	sum += len(tt.SubscribersOf("/+"))
-	sum += len(tt.SubscribersOf("/#"))
-	sum += len(tt.SubscribersOf("/a"))
+	sum += elen(tt.SubscribersOf("a"))
+	sum += elen(tt.SubscribersOf("/a"))
 
 	if sum != 0 {
 		t.Fatalf("SubscribersOf_none had subscriber")
@@ -300,10 +275,10 @@ func Test_SubscribersOf_1(t *testing.T) {
 
 	tt.AddSubscription(c, "a")
 
-	alen(1, len(tt.SubscribersOf("a")), 1, t)
-	alen(0, len(tt.SubscribersOf("b")), 2, t)
-	alen(0, len(tt.SubscribersOf("/a")), 3, t)
-	alen(0, len(tt.SubscribersOf("/b")), 4, t)
+	alen(1, elen(tt.SubscribersOf("a")), 1, t)
+	alen(0, elen(tt.SubscribersOf("b")), 2, t)
+	alen(0, elen(tt.SubscribersOf("/a")), 3, t)
+	alen(0, elen(tt.SubscribersOf("/b")), 4, t)
 }
 
 func Test_SubscribersOf_1h(t *testing.T) {
@@ -314,10 +289,10 @@ func Test_SubscribersOf_1h(t *testing.T) {
 
 	tt.AddSubscription(c, "#")
 
-	alen(1, len(tt.SubscribersOf("a")), 1, t)
-	alen(1, len(tt.SubscribersOf("b")), 2, t)
-	alen(1, len(tt.SubscribersOf("/a")), 3, t)
-	alen(1, len(tt.SubscribersOf("/b")), 4, t)
+	alen(1, elen(tt.SubscribersOf("a")), 1, t)
+	alen(1, elen(tt.SubscribersOf("b")), 2, t)
+	alen(1, elen(tt.SubscribersOf("/a")), 3, t)
+	alen(1, elen(tt.SubscribersOf("/b")), 4, t)
 }
 
 func Test_SubscribersOf_1sh(t *testing.T) {
@@ -328,10 +303,10 @@ func Test_SubscribersOf_1sh(t *testing.T) {
 
 	tt.AddSubscription(c, "/#")
 
-	alen(0, len(tt.SubscribersOf("a")), 1, t)
-	alen(0, len(tt.SubscribersOf("b")), 2, t)
-	alen(1, len(tt.SubscribersOf("/a")), 3, t)
-	alen(1, len(tt.SubscribersOf("/b")), 4, t)
+	alen(0, elen(tt.SubscribersOf("a")), 1, t)
+	alen(0, elen(tt.SubscribersOf("b")), 2, t)
+	alen(1, elen(tt.SubscribersOf("/a")), 3, t)
+	alen(1, elen(tt.SubscribersOf("/b")), 4, t)
 }
 
 func Test_SubscribersOf_1p(t *testing.T) {
@@ -342,10 +317,10 @@ func Test_SubscribersOf_1p(t *testing.T) {
 
 	tt.AddSubscription(c, "+")
 
-	alen(1, len(tt.SubscribersOf("a")), 1, t)
-	alen(1, len(tt.SubscribersOf("b")), 2, t)
-	alen(0, len(tt.SubscribersOf("/a")), 3, t)
-	alen(0, len(tt.SubscribersOf("/b")), 4, t)
+	alen(1, elen(tt.SubscribersOf("a")), 1, t)
+	alen(1, elen(tt.SubscribersOf("b")), 2, t)
+	alen(0, elen(tt.SubscribersOf("/a")), 3, t)
+	alen(0, elen(tt.SubscribersOf("/b")), 4, t)
 }
 
 func Test_SubscribersOf_1sp(t *testing.T) {
@@ -356,10 +331,10 @@ func Test_SubscribersOf_1sp(t *testing.T) {
 
 	tt.AddSubscription(c, "/+")
 
-	alen(0, len(tt.SubscribersOf("a")), 1, t)
-	alen(0, len(tt.SubscribersOf("b")), 2, t)
-	alen(1, len(tt.SubscribersOf("/a")), 3, t)
-	alen(1, len(tt.SubscribersOf("/b")), 4, t)
+	alen(0, elen(tt.SubscribersOf("a")), 1, t)
+	alen(0, elen(tt.SubscribersOf("b")), 2, t)
+	alen(1, elen(tt.SubscribersOf("/a")), 3, t)
+	alen(1, elen(tt.SubscribersOf("/b")), 4, t)
 }
 
 func Test_SubscribersOf_2(t *testing.T) {
@@ -370,14 +345,14 @@ func Test_SubscribersOf_2(t *testing.T) {
 
 	tt.AddSubscription(c, "a/b")
 
-	alen(0, len(tt.SubscribersOf("a")), 1, t)
-	alen(0, len(tt.SubscribersOf("b")), 2, t)
-	alen(0, len(tt.SubscribersOf("/a")), 3, t)
-	alen(0, len(tt.SubscribersOf("/b")), 4, t)
-	alen(1, len(tt.SubscribersOf("a/b")), 5, t)
-	alen(0, len(tt.SubscribersOf("b/a")), 6, t)
-	alen(0, len(tt.SubscribersOf("a/a")), 7, t)
-	alen(0, len(tt.SubscribersOf("a/b/c")), 8, t)
+	alen(0, elen(tt.SubscribersOf("a")), 1, t)
+	alen(0, elen(tt.SubscribersOf("b")), 2, t)
+	alen(0, elen(tt.SubscribersOf("/a")), 3, t)
+	alen(0, elen(tt.SubscribersOf("/b")), 4, t)
+	alen(1, elen(tt.SubscribersOf("a/b")), 5, t)
+	alen(0, elen(tt.SubscribersOf("b/a")), 6, t)
+	alen(0, elen(tt.SubscribersOf("a/a")), 7, t)
+	alen(0, elen(tt.SubscribersOf("a/b/c")), 8, t)
 }
 
 func Test_SubscribersOf_2ash(t *testing.T) {
@@ -388,14 +363,14 @@ func Test_SubscribersOf_2ash(t *testing.T) {
 
 	tt.AddSubscription(c, "a/#")
 
-	alen(0, len(tt.SubscribersOf("a")), 1, t)
-	alen(0, len(tt.SubscribersOf("b")), 2, t)
-	alen(0, len(tt.SubscribersOf("/a")), 3, t)
-	alen(0, len(tt.SubscribersOf("/b")), 4, t)
-	alen(1, len(tt.SubscribersOf("a/b")), 5, t)
-	alen(0, len(tt.SubscribersOf("b/a")), 6, t)
-	alen(1, len(tt.SubscribersOf("a/a")), 7, t)
-	alen(1, len(tt.SubscribersOf("a/b/c")), 8, t)
+	alen(0, elen(tt.SubscribersOf("a")), 1, t)
+	alen(0, elen(tt.SubscribersOf("b")), 2, t)
+	alen(0, elen(tt.SubscribersOf("/a")), 3, t)
+	alen(0, elen(tt.SubscribersOf("/b")), 4, t)
+	alen(1, elen(tt.SubscribersOf("a/b")), 5, t)
+	alen(0, elen(tt.SubscribersOf("b/a")), 6, t)
+	alen(1, elen(tt.SubscribersOf("a/a")), 7, t)
+	alen(1, elen(tt.SubscribersOf("a/b/c")), 8, t)
 }
 
 func Test_SubscribersOf_2h(t *testing.T) {
@@ -406,14 +381,14 @@ func Test_SubscribersOf_2h(t *testing.T) {
 
 	tt.AddSubscription(c, "#")
 
-	alen(1, len(tt.SubscribersOf("a")), 1, t)
-	alen(1, len(tt.SubscribersOf("b")), 2, t)
-	alen(1, len(tt.SubscribersOf("/a")), 3, t)
-	alen(1, len(tt.SubscribersOf("/b")), 4, t)
-	alen(1, len(tt.SubscribersOf("a/b")), 5, t)
-	alen(1, len(tt.SubscribersOf("b/a")), 6, t)
-	alen(1, len(tt.SubscribersOf("a/a")), 7, t)
-	alen(1, len(tt.SubscribersOf("a/b/c")), 8, t)
+	alen(1, elen(tt.SubscribersOf("a")), 1, t)
+	alen(1, elen(tt.SubscribersOf("b")), 2, t)
+	alen(1, elen(tt.SubscribersOf("/a")), 3, t)
+	alen(1, elen(tt.SubscribersOf("/b")), 4, t)
+	alen(1, elen(tt.SubscribersOf("a/b")), 5, t)
+	alen(1, elen(tt.SubscribersOf("b/a")), 6, t)
+	alen(1, elen(tt.SubscribersOf("a/a")), 7, t)
+	alen(1, elen(tt.SubscribersOf("a/b/c")), 8, t)
 }
 
 func Test_SubscribersOf_2p(t *testing.T) {
@@ -424,14 +399,14 @@ func Test_SubscribersOf_2p(t *testing.T) {
 
 	tt.AddSubscription(c, "+")
 
-	alen(1, len(tt.SubscribersOf("a")), 1, t)
-	alen(1, len(tt.SubscribersOf("b")), 2, t)
-	alen(0, len(tt.SubscribersOf("/a")), 3, t)
-	alen(0, len(tt.SubscribersOf("/b")), 4, t)
-	alen(0, len(tt.SubscribersOf("a/b")), 5, t)
-	alen(0, len(tt.SubscribersOf("b/a")), 6, t)
-	alen(0, len(tt.SubscribersOf("a/a")), 7, t)
-	alen(0, len(tt.SubscribersOf("a/b/c")), 8, t)
+	alen(1, elen(tt.SubscribersOf("a")), 1, t)
+	alen(1, elen(tt.SubscribersOf("b")), 2, t)
+	alen(0, elen(tt.SubscribersOf("/a")), 3, t)
+	alen(0, elen(tt.SubscribersOf("/b")), 4, t)
+	alen(0, elen(tt.SubscribersOf("a/b")), 5, t)
+	alen(0, elen(tt.SubscribersOf("b/a")), 6, t)
+	alen(0, elen(tt.SubscribersOf("a/a")), 7, t)
+	alen(0, elen(tt.SubscribersOf("a/b/c")), 8, t)
 }
 
 func Test_SubscribersOf_2asp(t *testing.T) {
@@ -442,14 +417,14 @@ func Test_SubscribersOf_2asp(t *testing.T) {
 
 	tt.AddSubscription(c, "a/+")
 
-	alen(0, len(tt.SubscribersOf("a")), 1, t)
-	alen(0, len(tt.SubscribersOf("b")), 2, t)
-	alen(0, len(tt.SubscribersOf("/a")), 3, t)
-	alen(0, len(tt.SubscribersOf("/b")), 4, t)
-	alen(1, len(tt.SubscribersOf("a/b")), 5, t)
-	alen(0, len(tt.SubscribersOf("b/a")), 6, t)
-	alen(1, len(tt.SubscribersOf("a/a")), 7, t)
-	alen(0, len(tt.SubscribersOf("a/b/c")), 8, t)
+	alen(0, elen(tt.SubscribersOf("a")), 1, t)
+	alen(0, elen(tt.SubscribersOf("b")), 2, t)
+	alen(0, elen(tt.SubscribersOf("/a")), 3, t)
+	alen(0, elen(tt.SubscribersOf("/b")), 4, t)
+	alen(1, elen(tt.SubscribersOf("a/b")), 5, t)
+	alen(0, elen(tt.SubscribersOf("b/a")), 6, t)
+	alen(1, elen(tt.SubscribersOf("a/a")), 7, t)
+	alen(0, elen(tt.SubscribersOf("a/b/c")), 8, t)
 }
 
 func Test_SubscribersOf_3aspsc(t *testing.T) {
@@ -460,15 +435,15 @@ func Test_SubscribersOf_3aspsc(t *testing.T) {
 
 	tt.AddSubscription(c, "a/+/c")
 
-	alen(0, len(tt.SubscribersOf("a")), 1, t)
-	alen(0, len(tt.SubscribersOf("b")), 2, t)
-	alen(0, len(tt.SubscribersOf("/a")), 3, t)
-	alen(0, len(tt.SubscribersOf("/b")), 4, t)
-	alen(0, len(tt.SubscribersOf("a/b")), 5, t)
-	alen(0, len(tt.SubscribersOf("b/a")), 6, t)
-	alen(0, len(tt.SubscribersOf("a/a")), 7, t)
-	alen(1, len(tt.SubscribersOf("a/b/c")), 8, t)
-	alen(0, len(tt.SubscribersOf("a/b/z")), 8, t)
+	alen(0, elen(tt.SubscribersOf("a")), 1, t)
+	alen(0, elen(tt.SubscribersOf("b")), 2, t)
+	alen(0, elen(tt.SubscribersOf("/a")), 3, t)
+	alen(0, elen(tt.SubscribersOf("/b")), 4, t)
+	alen(0, elen(tt.SubscribersOf("a/b")), 5, t)
+	alen(0, elen(tt.SubscribersOf("b/a")), 6, t)
+	alen(0, elen(tt.SubscribersOf("a/a")), 7, t)
+	alen(1, elen(tt.SubscribersOf("a/b/c")), 8, t)
+	alen(0, elen(tt.SubscribersOf("a/b/z")), 8, t)
 }
 
 func Test_SubscribersOf_3saspsc(t *testing.T) {
@@ -479,15 +454,15 @@ func Test_SubscribersOf_3saspsc(t *testing.T) {
 
 	tt.AddSubscription(c, "/a/+/c")
 
-	alen(0, len(tt.SubscribersOf("a")), 1, t)
-	alen(0, len(tt.SubscribersOf("b")), 2, t)
-	alen(0, len(tt.SubscribersOf("/a")), 3, t)
-	alen(0, len(tt.SubscribersOf("/b")), 4, t)
-	alen(0, len(tt.SubscribersOf("a/b")), 5, t)
-	alen(0, len(tt.SubscribersOf("b/a")), 6, t)
-	alen(0, len(tt.SubscribersOf("a/a")), 7, t)
-	alen(0, len(tt.SubscribersOf("a/b/c")), 8, t)
-	alen(0, len(tt.SubscribersOf("a/b/z")), 9, t)
+	alen(0, elen(tt.SubscribersOf("a")), 1, t)
+	alen(0, elen(tt.SubscribersOf("b")), 2, t)
+	alen(0, elen(tt.SubscribersOf("/a")), 3, t)
+	alen(0, elen(tt.SubscribersOf("/b")), 4, t)
+	alen(0, elen(tt.SubscribersOf("a/b")), 5, t)
+	alen(0, elen(tt.SubscribersOf("b/a")), 6, t)
+	alen(0, elen(tt.SubscribersOf("a/a")), 7, t)
+	alen(0, elen(tt.SubscribersOf("a/b/c")), 8, t)
+	alen(0, elen(tt.SubscribersOf("a/b/z")), 9, t)
 }
 
 func Test_SubscribersOf_mix(t *testing.T) {
@@ -498,23 +473,23 @@ func Test_SubscribersOf_mix(t *testing.T) {
 
 	tt.AddSubscription(c, "/a/+/c/#")
 
-	alen(0, len(tt.SubscribersOf("a")), 1, t)
-	alen(0, len(tt.SubscribersOf("b")), 2, t)
-	alen(0, len(tt.SubscribersOf("/a")), 3, t)
-	alen(0, len(tt.SubscribersOf("/b")), 4, t)
-	alen(0, len(tt.SubscribersOf("/a/b")), 5, t)
-	alen(0, len(tt.SubscribersOf("/b/a")), 6, t)
-	alen(0, len(tt.SubscribersOf("/a/a")), 7, t)
-	alen(0, len(tt.SubscribersOf("/a/b/c")), 8, t)
-	alen(0, len(tt.SubscribersOf("/a/b/z")), 9, t)
-	alen(1, len(tt.SubscribersOf("/a/b/c/d")), 10, t)
-	alen(1, len(tt.SubscribersOf("/a/b/c/d/e")), 11, t)
-	alen(1, len(tt.SubscribersOf("/a/b/c/d/e/f")), 12, t)
-	alen(0, len(tt.SubscribersOf("/a/b/z/d/e/f")), 13, t)
-	alen(0, len(tt.SubscribersOf("/a/b/b/c/d/e/f")), 14, t)
-	alen(0, len(tt.SubscribersOf("a/b/c/d")), 15, t)
-	alen(0, len(tt.SubscribersOf("a/b/c/d/e")), 16, t)
-	alen(0, len(tt.SubscribersOf("a/b/c/d/e/f")), 17, t)
+	alen(0, elen(tt.SubscribersOf("a")), 1, t)
+	alen(0, elen(tt.SubscribersOf("b")), 2, t)
+	alen(0, elen(tt.SubscribersOf("/a")), 3, t)
+	alen(0, elen(tt.SubscribersOf("/b")), 4, t)
+	alen(0, elen(tt.SubscribersOf("/a/b")), 5, t)
+	alen(0, elen(tt.SubscribersOf("/b/a")), 6, t)
+	alen(0, elen(tt.SubscribersOf("/a/a")), 7, t)
+	alen(0, elen(tt.SubscribersOf("/a/b/c")), 8, t)
+	alen(0, elen(tt.SubscribersOf("/a/b/z")), 9, t)
+	alen(1, elen(tt.SubscribersOf("/a/b/c/d")), 10, t)
+	alen(1, elen(tt.SubscribersOf("/a/b/c/d/e")), 11, t)
+	alen(1, elen(tt.SubscribersOf("/a/b/c/d/e/f")), 12, t)
+	alen(0, elen(tt.SubscribersOf("/a/b/z/d/e/f")), 13, t)
+	alen(0, elen(tt.SubscribersOf("/a/b/b/c/d/e/f")), 14, t)
+	alen(0, elen(tt.SubscribersOf("a/b/c/d")), 15, t)
+	alen(0, elen(tt.SubscribersOf("a/b/c/d/e")), 16, t)
+	alen(0, elen(tt.SubscribersOf("a/b/c/d/e/f")), 17, t)
 }
 
 func Test_SubscribersOf_multi(t *testing.T) {
@@ -531,23 +506,40 @@ func Test_SubscribersOf_multi(t *testing.T) {
 	tt.AddSubscription(c3, "/a/+/c/#")
 	tt.AddSubscription(c4, "/a/+/c/d/+")
 
-	alen(1, len(tt.SubscribersOf("a")), 1, t)
-	alen(0, len(tt.SubscribersOf("b")), 2, t)
-	alen(0, len(tt.SubscribersOf("/a")), 3, t)
-	alen(0, len(tt.SubscribersOf("/b")), 4, t)
-	alen(0, len(tt.SubscribersOf("/a/b")), 5, t)
-	alen(0, len(tt.SubscribersOf("/b/a")), 6, t)
-	alen(0, len(tt.SubscribersOf("/a/a")), 7, t)
-	alen(0, len(tt.SubscribersOf("/a/b/c")), 8, t)
-	alen(0, len(tt.SubscribersOf("/a/b/z")), 9, t)
-	alen(2, len(tt.SubscribersOf("/a/b/c/d")), 10, t)
-	alen(2, len(tt.SubscribersOf("/a/b/c/d/e")), 11, t)
-	alen(1, len(tt.SubscribersOf("/a/b/c/d/e/f")), 12, t)
-	alen(0, len(tt.SubscribersOf("/a/b/z/d/e/f")), 13, t)
-	alen(0, len(tt.SubscribersOf("/a/b/b/c/d/e/f")), 14, t)
-	alen(0, len(tt.SubscribersOf("a/b/c/d")), 15, t)
-	alen(0, len(tt.SubscribersOf("a/b/c/d/e")), 16, t)
-	alen(0, len(tt.SubscribersOf("a/b/c/d/e/f")), 17, t)
+	alen(1, elen(tt.SubscribersOf("a")), 1, t)
+	alen(0, elen(tt.SubscribersOf("b")), 2, t)
+	alen(0, elen(tt.SubscribersOf("/a")), 3, t)
+	alen(0, elen(tt.SubscribersOf("/b")), 4, t)
+	alen(0, elen(tt.SubscribersOf("/a/b")), 5, t)
+	alen(0, elen(tt.SubscribersOf("/b/a")), 6, t)
+	alen(0, elen(tt.SubscribersOf("/a/a")), 7, t)
+	alen(0, elen(tt.SubscribersOf("/a/b/c")), 8, t)
+	alen(0, elen(tt.SubscribersOf("/a/b/z")), 9, t)
+	alen(2, elen(tt.SubscribersOf("/a/b/c/d")), 10, t)
+	alen(2, elen(tt.SubscribersOf("/a/b/c/d/e")), 11, t)
+	alen(1, elen(tt.SubscribersOf("/a/b/c/d/e/f")), 12, t)
+	alen(0, elen(tt.SubscribersOf("/a/b/z/d/e/f")), 13, t)
+	alen(0, elen(tt.SubscribersOf("/a/b/b/c/d/e/f")), 14, t)
+	alen(0, elen(tt.SubscribersOf("a/b/c/d")), 15, t)
+	alen(0, elen(tt.SubscribersOf("a/b/c/d/e")), 16, t)
+	alen(0, elen(tt.SubscribersOf("a/b/c/d/e/f")), 17, t)
+}
+
+func Test_SubscribersOf_SS(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c1 := NewClient("c1", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c1, "/")
+	alen(0, elen(tt.SubscribersOf("a")), 1, t)
+	alen(1, elen(tt.SubscribersOf("/")), 2, t)
+	alen(0, elen(tt.SubscribersOf("//")), 3, t)
+
+	tt.AddSubscription(c1, "//")
+	alen(0, elen(tt.SubscribersOf("a")), 4, t)
+	alen(1, elen(tt.SubscribersOf("/")), 5, t)
+	alen(1, elen(tt.SubscribersOf("//")), 6, t)
 }
 
 func Test_RemoveSubscription_rs1(t *testing.T) {
@@ -557,10 +549,10 @@ func Test_RemoveSubscription_rs1(t *testing.T) {
 	tt := NewTopicTree()
 
 	tt.AddSubscription(c1, "a")
-	alen(1, len(tt.SubscribersOf("a")), 1, t)
+	alen(1, elen(tt.SubscribersOf("a")), 1, t)
 
 	tt.RemoveSubscription(c1, "a")
-	alen(0, len(tt.SubscribersOf("a")), 2, t)
+	alen(0, elen(tt.SubscribersOf("a")), 2, t)
 }
 
 func Test_RemoveSubscription_rs2(t *testing.T) {
@@ -572,16 +564,16 @@ func Test_RemoveSubscription_rs2(t *testing.T) {
 
 	tt.AddSubscription(c1, "/alpha/beta")
 	tt.AddSubscription(c2, "/alpha/beta")
-	alen(2, len(tt.SubscribersOf("/alpha/beta")), 1, t)
+	alen(2, elen(tt.SubscribersOf("/alpha/beta")), 1, t)
 
 	tt.RemoveSubscription(c2, "/alpha/beta")
-	alen(1, len(tt.SubscribersOf("/alpha/beta")), 2, t)
+	alen(1, elen(tt.SubscribersOf("/alpha/beta")), 2, t)
 
 	tt.RemoveSubscription(c2, "/alpha/beta")
-	alen(1, len(tt.SubscribersOf("/alpha/beta")), 3, t)
+	alen(1, elen(tt.SubscribersOf("/alpha/beta")), 3, t)
 
 	tt.RemoveSubscription(c1, "/alpha/beta")
-	alen(0, len(tt.SubscribersOf("/alpha/beta")), 4, t)
+	alen(0, elen(tt.SubscribersOf("/alpha/beta")), 4, t)
 }
 
 func Test_RemoveSubscription_rs3(t *testing.T) {
@@ -594,31 +586,31 @@ func Test_RemoveSubscription_rs3(t *testing.T) {
 
 	tt.AddSubscription(c1, "/alpha/+/gamma")
 	tt.AddSubscription(c2, "/alpha/beta")
-	alen(1, len(tt.SubscribersOf("/alpha/beta")), 1, t)
-	alen(1, len(tt.SubscribersOf("/alpha/beta/gamma")), 2, t)
+	alen(1, elen(tt.SubscribersOf("/alpha/beta")), 1, t)
+	alen(1, elen(tt.SubscribersOf("/alpha/beta/gamma")), 2, t)
 
 	tt.RemoveSubscription(c1, "/alpha/+/gamma")
-	alen(1, len(tt.SubscribersOf("/alpha/beta")), 3, t)
-	alen(0, len(tt.SubscribersOf("/alpha/beta/gamma")), 4, t)
+	alen(1, elen(tt.SubscribersOf("/alpha/beta")), 3, t)
+	alen(0, elen(tt.SubscribersOf("/alpha/beta/gamma")), 4, t)
 
 	tt.AddSubscription(c3, "/alpha/#")
-	alen(2, len(tt.SubscribersOf("/alpha/beta")), 5, t)
-	alen(1, len(tt.SubscribersOf("/alpha/foo")), 6, t)
+	alen(2, elen(tt.SubscribersOf("/alpha/beta")), 5, t)
+	alen(1, elen(tt.SubscribersOf("/alpha/foo")), 6, t)
 
 	tt.RemoveSubscription(c2, "/alpha/beta")
-	alen(1, len(tt.SubscribersOf("/alpha/beta")), 7, t)
-	alen(1, len(tt.SubscribersOf("/alpha/zoo")), 8, t)
-	alen(1, len(tt.SubscribersOf("/alpha/beta/gamma")), 9, t)
-	alen(1, len(tt.SubscribersOf("/alpha/beta/gamma/zeta")), 10, t)
-	alen(0, len(tt.SubscribersOf("/alpha")), 11, t)
+	alen(1, elen(tt.SubscribersOf("/alpha/beta")), 7, t)
+	alen(1, elen(tt.SubscribersOf("/alpha/zoo")), 8, t)
+	alen(1, elen(tt.SubscribersOf("/alpha/beta/gamma")), 9, t)
+	alen(1, elen(tt.SubscribersOf("/alpha/beta/gamma/zeta")), 10, t)
+	alen(0, elen(tt.SubscribersOf("/alpha")), 11, t)
 
 	tt.RemoveSubscription(c3, "/alpha/beta")
-	alen(1, len(tt.SubscribersOf("/alpha/beta")), 12, t)
-	alen(0, len(tt.SubscribersOf("/alpha")), 13, t)
+	alen(1, elen(tt.SubscribersOf("/alpha/beta")), 12, t)
+	alen(0, elen(tt.SubscribersOf("/alpha")), 13, t)
 
 	tt.RemoveSubscription(c3, "/alpha/#")
-	alen(0, len(tt.SubscribersOf("/alpha/beta")), 14, t)
-	alen(0, len(tt.SubscribersOf("/alpha/gamma")), 15, t)
-	alen(0, len(tt.SubscribersOf("/alpha/beta/gamma")), 16, t)
-	alen(0, len(tt.SubscribersOf("/alpha")), 17, t)
+	alen(0, elen(tt.SubscribersOf("/alpha/beta")), 14, t)
+	alen(0, elen(tt.SubscribersOf("/alpha/gamma")), 15, t)
+	alen(0, elen(tt.SubscribersOf("/alpha/beta/gamma")), 16, t)
+	alen(0, elen(tt.SubscribersOf("/alpha")), 17, t)
 }

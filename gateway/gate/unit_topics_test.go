@@ -37,7 +37,6 @@ func Test_ContainsWildcard(t *testing.T) {
 	}
 }
 
-// 450 ns/op
 func Benchmark_ContainsWildcard(b *testing.B) {
 	topics := map[string]bool{
 		"a":       false,
@@ -76,17 +75,17 @@ func Benchmark_ContainsWildcard(b *testing.B) {
 	}
 }
 
-func Test_ValidateSubscribeTopicName(t *testing.T) {
+func Test_ValidateTopicFilter(t *testing.T) {
 	topics := map[string]bool{
 		"":         false,
 		"a":        true,
 		"#":        true,
 		"+":        true,
-		"/":        false,
+		"/":        true,
 		"/a":       true,
 		"/#":       true,
-		"a/":       false,
-		"+/":       false,
+		"a/":       true,
+		"+/":       true,
 		"#/":       false,
 		"a/b":      true,
 		"a/#":      true,
@@ -94,7 +93,7 @@ func Test_ValidateSubscribeTopicName(t *testing.T) {
 		"b/a":      true,
 		"#/b":      false,
 		"+/b":      true,
-		"a/b/c/":   false,
+		"a/b/c/":   true,
 		"/a/b/c":   true,
 		"/a/++":    true,
 		"a/++/b":   true,
@@ -106,28 +105,30 @@ func Test_ValidateSubscribeTopicName(t *testing.T) {
 		"/a/+/b/#": true,
 		"/a/+#/b":  true,
 		"/a/#+/b":  true,
+		"a//b":     true,
+		"//a":      true,
+		"a//":      true,
 	}
 
 	for topic, expectError := range topics {
-		_, e := ValidateSubscribeTopicName(topic)
+		_, e := ValidateTopicFilter(topic)
 		if expectError == (e != nil) {
 			t.Errorf("error validating topic \"%s\"", topic)
 		}
 	}
 }
 
-// 5833 ns/op
-func Benchmark_ValidateSubscribeTopicName(b *testing.B) {
+func Benchmark_ValidateTopicFilter(b *testing.B) {
 	topics := map[string]bool{
 		"":         false,
 		"a":        true,
 		"#":        true,
 		"+":        true,
-		"/":        false,
+		"/":        true,
 		"/a":       true,
 		"/#":       true,
-		"a/":       false,
-		"+/":       false,
+		"a/":       true,
+		"+/":       true,
 		"#/":       false,
 		"a/b":      true,
 		"a/#":      true,
@@ -147,27 +148,30 @@ func Benchmark_ValidateSubscribeTopicName(b *testing.B) {
 		"/a/+/b/#": true,
 		"/a/+#/b":  true,
 		"/a/#+/b":  true,
+		"a//b":     true,
+		"//a":      true,
+		"a//":      true,
 	}
 
 	for i := 0; i < b.N; i++ {
 		sum := 0
 		for topic, _ := range topics {
-			toks, _ := ValidateSubscribeTopicName(topic)
+			toks, _ := ValidateTopicFilter(topic)
 			sum += len(toks)
 		}
 	}
 }
 
-func Test_ValidatePublishTopicName(t *testing.T) {
+func Test_ValidateTopicName(t *testing.T) {
 	topics := map[string]bool{
 		"":         false,
 		"a":        true,
 		"#":        false,
 		"+":        false,
-		"/":        false,
+		"/":        true,
 		"/a":       true,
 		"/#":       false,
-		"a/":       false,
+		"a/":       true,
 		"+/":       false,
 		"#/":       false,
 		"a/b":      true,
@@ -176,7 +180,7 @@ func Test_ValidatePublishTopicName(t *testing.T) {
 		"b/a":      true,
 		"#/b":      false,
 		"+/b":      false,
-		"a/b/c/":   false,
+		"a/b/c/":   true,
 		"/a/b/c":   true,
 		"/a/++":    true,
 		"a/++/b":   true,
@@ -188,27 +192,30 @@ func Test_ValidatePublishTopicName(t *testing.T) {
 		"/a/+/b/#": false,
 		"/a/+#/b":  true,
 		"/a/#+/b":  true,
+		"//":       true,
+		"a//":      true,
+		"//a":      true,
+		"///a///":  true,
 	}
 
 	for topic, expectError := range topics {
-		_, e := ValidatePublishTopicName(topic)
+		_, e := ValidateTopicName(topic)
 		if expectError == (e != nil) {
 			t.Errorf("error validating topic \"%s\"", topic)
 		}
 	}
 }
 
-// 8299 ns/op
-func Benchmark_ValidatePublishTopicName(b *testing.B) {
+func Benchmark_ValidateTopicName(b *testing.B) {
 	topics := map[string]bool{
 		"":         false,
 		"a":        true,
 		"#":        false,
 		"+":        false,
-		"/":        false,
+		"/":        true,
 		"/a":       true,
 		"/#":       false,
-		"a/":       false,
+		"a/":       true,
 		"+/":       false,
 		"#/":       false,
 		"a/b":      true,
@@ -217,7 +224,7 @@ func Benchmark_ValidatePublishTopicName(b *testing.B) {
 		"b/a":      true,
 		"#/b":      false,
 		"+/b":      false,
-		"a/b/c/":   false,
+		"a/b/c/":   true,
 		"/a/b/c":   true,
 		"/a/++":    true,
 		"a/++/b":   true,
@@ -229,12 +236,16 @@ func Benchmark_ValidatePublishTopicName(b *testing.B) {
 		"/a/+/b/#": false,
 		"/a/+#/b":  true,
 		"/a/#+/b":  true,
+		"//":       true,
+		"a//":      true,
+		"//a":      true,
+		"///a///":  true,
 	}
 
 	for i := 0; i < b.N; i++ {
 		sum := 0
 		for topic, _ := range topics {
-			toks, _ := ValidatePublishTopicName(topic)
+			toks, _ := ValidateTopicName(topic)
 			sum += len(toks)
 		}
 	}

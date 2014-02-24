@@ -2,7 +2,6 @@ package gateway
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 )
 
@@ -25,7 +24,7 @@ func newNode() *node {
 
 // return true if level needed to be created, false otherwise
 func (n *node) goTo(level string) (*node, bool) {
-	fmt.Printf("goTo(\"%s\")\n", level)
+	//fmt.Printf("goTo(\"%s\")\n", level)
 	created := false
 	if n.children[level] == nil {
 		n.children[level] = newNode()
@@ -39,18 +38,12 @@ func (n *node) goTo(level string) (*node, bool) {
 func (n *node) addClient(client *Client) bool {
 	isFirst := len(n.clients) == 0
 	n.clients = append(n.clients, client)
-	fmt.Printf("addClient(\"%s\")\n", client.ClientId)
+	//fmt.Printf("addClient(\"%s\")\n", client.ClientId)
 	return isFirst
 }
 
 func NewTopicTree() *TopicTree {
 	var t TopicTree
-	// Annoyingly, the spec allows for an empty
-	// string root (but no empty string levels after that)
-	// ex: "/a/b" and "a/b"
-	// do NOT match, and "a//b" is not allowed.
-	// Consequently, "/#" and "b" do NOT match because
-	// they contain a different number of levels
 	t.root = newNode()
 	return &t
 }
@@ -61,7 +54,7 @@ func (tt *TopicTree) AddSubscription(client *Client, topic string) (bool, error)
 	defer tt.Unlock()
 	tt.Lock()
 	fmt.Printf("AddSubscription(\"%s\", \"%s\")\n", client.ClientId, topic)
-	if levels, e := ValidateSubscribeTopicName(topic); e != nil {
+	if levels, e := ValidateTopicFilter(topic); e != nil {
 		return false, e
 	} else {
 		n := tt.root
@@ -76,44 +69,50 @@ func (tt *TopicTree) AddSubscription(client *Client, topic string) (bool, error)
 
 // topic could contain wild cards, however we do only consider the literal
 // topic string - (wilds are not evaluated for this)
-func (tt *TopicTree) RemoveSubscription(s *Client, topic string) {
+func (tt *TopicTree) RemoveSubscription(s *Client, topic string) error {
 	defer tt.Unlock()
 	tt.Lock()
-	levels := strings.Split(topic, "/")
-	n := tt.root
-	for _, level := range levels {
-		if n = n.children[level]; n == nil {
-			fmt.Printf("no subscription exists \"%s\"\n", topic)
-			return
-		}
-	}
-	if len(n.clients) < 1 {
-		fmt.Printf("no clients of subscription \"%s\"\n", topic)
+	if levels, e := ValidateTopicFilter(topic); e != nil {
+		return e
 	} else {
+		n := tt.root
+		for _, level := range levels {
+			if n = n.children[level]; n == nil {
+				return fmt.Errorf("no subscription exists \"%s\"\n", topic)
+			}
+		}
+		if len(n.clients) < 1 {
+			return fmt.Errorf("no clients of subscription \"%s\"\n", topic)
+		}
 		for i := 0; i < len(n.clients); i++ {
 			if n.clients[i].ClientId == s.ClientId {
 				// inexpensive way of removing from a slice
 				n.clients[i] = n.clients[len(n.clients)-1]
 				n.clients = n.clients[0 : len(n.clients)-1]
 				fmt.Printf("deleted subscription of client \"%s\"\n", s.ClientId)
-				return
+				return nil
 			}
 		}
-		fmt.Printf("client \"%s\" was not subscribed to \"%s\"\n", s.ClientId, topic)
+		return fmt.Errorf("client \"%s\" was not subscribed to \"%s\"\n", s.ClientId, topic)
 	}
 }
 
 // topic MUST be valid (ie no wild cards, no empty level, no ending slash)
 /***! Hey dipstick, read the above comment, !***/
 /***! that's where your bug is coming from. !***/
-func (tt *TopicTree) SubscribersOf(topic string) (clients []*Client) {
+func (tt *TopicTree) SubscribersOf(topic string) ([]*Client, error) {
 	defer tt.RUnlock()
 	tt.RLock()
 
+	clients := make([]*Client, 0)
+
 	n := tt.root
-	levels := strings.Split(topic, "/")
-	subscribers(n, levels, &clients)
-	return
+	if levels, e := ValidateTopicName(topic); e != nil {
+		return nil, e
+	} else {
+		subscribers(n, levels, &clients)
+		return clients, nil
+	}
 }
 
 func subscribers(n *node, levels []string, clients *[]*Client) {

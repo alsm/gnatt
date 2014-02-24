@@ -100,9 +100,12 @@ func (ag *AggGate) distribute(msg MQTT.Message) {
 	// published
 	// then publish msg to those clients (async)
 
-	clients := ag.tTree.SubscribersOf(topic)
-	for _, client := range clients {
-		go ag.publish(msg, client)
+	if clients, e := ag.tTree.SubscribersOf(topic); e != nil {
+		fmt.Println(e)
+	} else {
+		for _, client := range clients {
+			go ag.publish(msg, client)
+		}
 	}
 }
 

@@ -6,6 +6,23 @@ import (
 	"sync"
 )
 
+// Topic Names and Topic Filters
+// The MQTT v3.1.1 spec clarifies a number of ambiguities with regard
+// to the validity of Topic strings.
+// - A Topic must be between 1 and 65535 bytes.
+// - A Topic is case sensitive.
+// - A Topic may contain whitespace.
+// - A Topic containing a leading forward slash is different than a Topic without.
+// - A Topic may be "/" (two levels, both empty string).
+// - A Topic must be UTF-8 encoded.
+// - A Topic may contain any number of levels.
+// - A Topic may contain an empty level (two forward slashes in a row).
+// - A TopicName may not contain a wildcard.
+// - A TopicFilter may only have a # (multi-level) wildcard as the last level.
+// - A TopicFilter may contain any number of + (single-level) wildcards.
+// - A TopicFilter with a # will match the absense of a level
+//     Example:  a subscription to "foo/#" will match messages published to "foo".
+
 func ContainsWildcard(topic string) bool {
 	if len(topic) == 1 && (topic == "+" || topic == "#") {
 		return true
@@ -16,19 +33,13 @@ func ContainsWildcard(topic string) bool {
 	return strings.Contains(topic, "/+/")
 }
 
-func ValidateSubscribeTopicName(topic string) ([]string, error) {
+func ValidateTopicFilter(topic string) ([]string, error) {
 	if len(topic) == 0 {
-		return nil, fmt.Errorf("topic may not be empty string")
-	}
-	if topic[len(topic)-1] == '/' {
-		return nil, fmt.Errorf("topic may not end with level seperator")
+		return nil, fmt.Errorf("TopicFilter may not be empty string")
 	}
 
 	levels := strings.Split(topic, "/")
 	for i, level := range levels {
-		if level == "" && i != 0 {
-			return nil, fmt.Errorf("non-root topic level may not be empty string")
-		}
 		if level == "#" && i != len(levels)-1 {
 			return nil, fmt.Errorf("multi-level wild card must be last level in topic")
 		}
@@ -36,21 +47,15 @@ func ValidateSubscribeTopicName(topic string) ([]string, error) {
 	return levels, nil
 }
 
-func ValidatePublishTopicName(topic string) ([]string, error) {
+func ValidateTopicName(topic string) ([]string, error) {
 	if len(topic) == 0 {
-		return nil, fmt.Errorf("topic may not be empty string")
-	}
-	if topic[len(topic)-1] == '/' {
-		return nil, fmt.Errorf("topic may not end with level seperator")
+		return nil, fmt.Errorf("TopicName may not be empty string")
 	}
 
 	levels := strings.Split(topic, "/")
-	for i, level := range levels {
+	for _, level := range levels {
 		if level == "#" || level == "+" {
-			return nil, fmt.Errorf("topic may not contain wild card character")
-		}
-		if level == "" && i != 0 {
-			return nil, fmt.Errorf("non-root topic level may not be empty string")
+			return nil, fmt.Errorf("TopicName may not contain wild card character")
 		}
 	}
 	return levels, nil
