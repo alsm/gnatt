@@ -3,9 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	G "github.com/alsm/gnatt/gateway/gate"
 	"os"
 	"os/signal"
+
+	G "github.com/alsm/gnatt/gateway/gate"
 )
 
 func main() {
@@ -17,10 +18,8 @@ func main() {
 		fmt.Println("GNATT Gateway starting in aggregating mode")
 		gateway = initAggregating(gatewayconf, stopsig)
 	} else {
-		fmt.Println("GNATT Transparent gateway not yet implemented")
-		os.Exit(0)
-		//fmt.Println("GNATT Gateway starting in transparent mode")
-		//gateway = initTransparent(broker)
+		fmt.Println("GNATT Gateway starting in transparent mode")
+		gateway = initTransparent(gatewayconf, stopsig)
 	}
 
 	gateway.Start()
@@ -53,9 +52,10 @@ func initAggregating(gc *G.GatewayConfig, stopsig chan os.Signal) *G.AggGate {
 	return ag
 }
 
-// func initTransparent(broker string) *transGate {
-// 	fmt.Printf("trans broker: %s\n", broker)
-// }
+func initTransparent(gc *G.GatewayConfig, stopsig chan os.Signal) *G.TransGate {
+	tg := G.NewTransGate(gc, stopsig)
+	return tg
+}
 
 func registerSignals() chan os.Signal {
 	c := make(chan os.Signal, 1)
