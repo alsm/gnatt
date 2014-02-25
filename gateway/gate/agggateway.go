@@ -2,12 +2,14 @@ package gateway
 
 import (
 	"fmt"
-	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
-	. "github.com/alsm/gnatt/common/protocol"
-	"github.com/alsm/gnatt/common/utils"
 	"os"
 	"sync"
 	"time"
+
+	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
+
+	. "github.com/alsm/gnatt/common/protocol"
+	"github.com/alsm/gnatt/common/utils"
 )
 
 type AggGate struct {
