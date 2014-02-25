@@ -337,6 +337,26 @@ func Test_SubscribersOf_1sp(t *testing.T) {
 	alen(1, elen(tt.SubscribersOf("/b")), 4, t)
 }
 
+func Test_SubscribersOf_1fooHS(t *testing.T) {
+	var conn uConn
+	var addr uAddr
+	c := NewClient("so_1fooHS", conn, addr)
+	tt := NewTopicTree()
+
+	tt.AddSubscription(c, "foo/#")
+	alen(1, elen(tt.SubscribersOf("foo/")), 1, t)
+}
+
+// func Test_SubscribersOf_1fooH(t *testing.T) {
+// 	var conn uConn
+// 	var addr uAddr
+// 	c := NewClient("so_1fooH", conn, addr)
+// 	tt := NewTopicTree()
+
+// 	tt.AddSubscription(c, "foo/#")
+// 	alen(1, elen(tt.SubscribersOf("foo")), 1, t)
+// }
+
 func Test_SubscribersOf_2(t *testing.T) {
 	var conn uConn
 	var addr uAddr
