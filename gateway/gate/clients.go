@@ -12,7 +12,7 @@ type StorableClient interface {
 
 type Clients struct {
 	sync.RWMutex
-	// indexed by "address:port"
+	// indexed by "address:port" => StorableClient
 	clients map[string]StorableClient
 }
 

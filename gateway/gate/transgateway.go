@@ -3,6 +3,7 @@ package gateway
 import (
 	"fmt"
 	"os"
+	"sync"
 
 	. "github.com/alsm/gnatt/common/protocol"
 	"github.com/alsm/gnatt/common/utils"
@@ -16,10 +17,16 @@ type TransGate struct {
 }
 
 func NewTransGate(gc *GatewayConfig, stopsig chan os.Signal) *TransGate {
-	var tg TransGate
-	tg.port = gc.port
-	tg.mqttbroker = gc.mqttbroker
-	return &tg
+	tg := &TransGate{
+		stopsig,
+		gc.port,
+		gc.mqttbroker,
+		Clients{
+			sync.RWMutex{},
+			make(map[string]StorableClient),
+		},
+	}
+	return tg
 }
 
 func (tg *TransGate) Port() int {
@@ -125,15 +132,15 @@ func (tg *TransGate) handle_CONNECT(m *ConnectMessage, c uConn, r uAddr) {
 		if m.Will() {
 			// todo: will msg
 		}
-		//tclient := NewTransClient(string(clientid), c, r)
-		//tg.clients.AddClient(tclient)
+		tclient := NewTransClient(string(clientid), c, r)
+		tg.clients.AddClient(tclient)
 
-		// ca := NewConnackMessage(0) // todo: 0 ?
-		// if ioerr := client.Write(ca); ioerr != nil {
-		// 	fmt.Println(ioerr)
-		// } else {
-		// 	fmt.Println("CONNACK was sent")
-		// }
+		ca := NewConnackMessage(0) // todo: 0 ?
+		if ioerr := tclient.Write(ca); ioerr != nil {
+			fmt.Println(ioerr)
+		} else {
+			fmt.Println("CONNACK was sent")
+		}
 	}
 }
 
@@ -159,6 +166,7 @@ func (tg *TransGate) handle_WILLMSG(m *WillMsgMessage, r uAddr) {
 
 func (tg *TransGate) handle_REGISTER(m *RegisterMessage, c uConn, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+
 }
 
 func (tg *TransGate) handle_REGACK(m *RegackMessage, r uAddr) {
