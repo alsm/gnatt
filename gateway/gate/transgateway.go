@@ -14,6 +14,7 @@ type TransGate struct {
 	port       int
 	mqttbroker string
 	clients    Clients
+	tIndex     topicNames
 }
 
 func NewTransGate(gc *GatewayConfig, stopsig chan os.Signal) *TransGate {
@@ -24,6 +25,11 @@ func NewTransGate(gc *GatewayConfig, stopsig chan os.Signal) *TransGate {
 		Clients{
 			sync.RWMutex{},
 			make(map[string]StorableClient),
+		},
+		topicNames{
+			sync.RWMutex{},
+			make(map[uint16]string),
+			0,
 		},
 	}
 	return tg
@@ -166,7 +172,27 @@ func (tg *TransGate) handle_WILLMSG(m *WillMsgMessage, r uAddr) {
 
 func (tg *TransGate) handle_REGISTER(m *RegisterMessage, c uConn, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	topic := string(m.TopicName())
+	var topicid uint16
+	if !tg.tIndex.containsTopic(topic) {
+		topicid = tg.tIndex.putTopic(topic)
+	} else {
+		topicid = tg.tIndex.getId(topic)
+	}
 
+	fmt.Printf("tg topicid: %d\n", topicid)
+
+	tclient := tg.clients.GetClient(r).(*TransClient)
+	tclient.Register(topicid)
+
+	ra := NewRegackMessage(topicid, m.MsgId(), 0)
+	fmt.Printf("ra.Msgid: %d\n", ra.MsgId())
+
+	if err := tclient.Write(ra); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("REGACK sent")
+	}
 }
 
 func (tg *TransGate) handle_REGACK(m *RegackMessage, r uAddr) {

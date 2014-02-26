@@ -291,7 +291,7 @@ func (ag *AggGate) handle_REGISTER(m *RegisterMessage, c uConn, r uAddr) {
 	if err := client.Write(ra); err != nil {
 		fmt.Println(err)
 	} else {
-		fmt.Printf("REGACK sent")
+		fmt.Println("REGACK sent")
 	}
 }
 
