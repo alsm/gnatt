@@ -223,28 +223,28 @@ func (ag *AggGate) handle_GWINFO(m *GwInfoMessage, r uAddr) {
 
 func (ag *AggGate) handle_CONNECT(m *ConnectMessage, c uConn, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
-	clientid := string(m.ClientId())
-	if clientid == "" {
-		fmt.Println("CONNECT with no client id rejected")
-		return
-	}
-	fmt.Printf("clientid: %s\n", clientid)
-	fmt.Printf("remoteaddr: %s\n", r.r)
-	fmt.Printf("will: %v\n", m.Will())
 
-	if m.Will() {
-		// todo: do something about that
-	}
-
-	client := NewClient(string(m.ClientId()), c, r)
-	ag.clients.AddClient(client)
-
-	ca := NewConnackMessage(0)
-
-	if err := client.Write(ca); err != nil {
-		fmt.Println(err)
+	if clientid, e := validateClientId(m.ClientId()); e != nil {
+		fmt.Println(e)
 	} else {
-		fmt.Println("CONNACK was sent")
+		fmt.Printf("clientid: %s\n", clientid)
+		fmt.Printf("remoteaddr: %s\n", r.r)
+		fmt.Printf("will: %v\n", m.Will())
+
+		if m.Will() {
+			// todo: do something about that
+		}
+
+		client := NewClient(string(m.ClientId()), c, r)
+		ag.clients.AddClient(client)
+
+		ca := NewConnackMessage(0)
+
+		if ioerr := client.Write(ca); ioerr != nil {
+			fmt.Println(ioerr)
+		} else {
+			fmt.Println("CONNACK was sent")
+		}
 	}
 }
 

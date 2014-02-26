@@ -115,6 +115,11 @@ func (tg *TransGate) handle_GWINFO(m *GwInfoMessage, r uAddr) {
 
 func (tg *TransGate) handle_CONNECT(m *ConnectMessage, c uConn, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	if clientid, err := validateClientId(m.ClientId()); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("clientid: %s\n", clientid)
+	}
 }
 
 func (tg *TransGate) handle_CONNACK(m *ConnackMessage, r uAddr) {
