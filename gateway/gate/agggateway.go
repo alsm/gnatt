@@ -51,7 +51,7 @@ func NewAggGate(gc *GatewayConfig, stopsig chan os.Signal) *AggGate {
 		NewTopicTree(),
 		Clients{
 			sync.RWMutex{},
-			make(map[string]*Client),
+			make(map[string]StorableClient),
 		},
 		nil,
 	}
@@ -280,7 +280,7 @@ func (ag *AggGate) handle_REGISTER(m *RegisterMessage, c uConn, r uAddr) {
 		topicid = ag.tIndex.getId(topic)
 	}
 
-	client := ag.clients.GetClient(r)
+	client := ag.clients.GetClient(r).(*Client)
 	client.Register(topicid)
 
 	fmt.Printf("ag topicid: %d\n", topicid)
@@ -300,7 +300,7 @@ func (ag *AggGate) handle_REGACK(m *RegackMessage, r uAddr) {
 	// the gateway sends a register when there is a message
 	// that needs to be published, so we do that now
 	topicid := m.TopicId()
-	client := ag.clients.GetClient(r)
+	client := ag.clients.GetClient(r).(*Client)
 	pm := client.FetchPendingMessage(topicid)
 	if pm == nil {
 		fmt.Printf("no pending message for %s id %d\n", client, topicid)
@@ -362,7 +362,7 @@ func (ag *AggGate) handle_SUBSCRIBE(m *SubscribeMessage, c uConn, r uAddr) {
 		}
 	} // todo: other topic id types
 
-	client := ag.clients.GetClient(r)
+	client := ag.clients.GetClient(r).(*Client)
 	if first, err := ag.tTree.AddSubscription(client, topic); err != nil {
 		fmt.Println("error adding subscription: %v\n", err)
 		// todo: suback an error message?
