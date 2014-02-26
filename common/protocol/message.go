@@ -81,7 +81,7 @@ func NewMessage(msgType MsgType) (m Message) {
 	case ADVERTISE:
 		m = new(AdvertiseMessage)
 	case SEARCHGW:
-		m = new(SearchgwMessage)
+		m = new(SearchGwMessage)
 	case GWINFO:
 		m = new(GwInfoMessage)
 	case CONNECT:
@@ -357,26 +357,26 @@ func (a *AdvertiseMessage) Unpack(msg []byte) Message {
  * Search GW *
  *************/
 
-type SearchgwMessage struct {
+type SearchGwMessage struct {
 	Header
 	radius byte
 }
 
-func (s *SearchgwMessage) Radius() byte {
+func (s *SearchGwMessage) Radius() byte {
 	return s.radius
 }
 
-func (s *SearchgwMessage) SetRadius(radius byte) {
+func (s *SearchGwMessage) SetRadius(radius byte) {
 	s.radius = radius
 }
 
-func (s *SearchgwMessage) Pack() (msg []byte) {
+func (s *SearchGwMessage) Pack() (msg []byte) {
 	msg = append(msg, s.PackHeader()...)
 	msg = append(msg, s.Radius())
 	return
 }
 
-func (s *SearchgwMessage) Unpack(msg []byte) Message {
+func (s *SearchGwMessage) Unpack(msg []byte) Message {
 	msg = s.UnpackHeader(msg)
 	s.SetRadius(msg[0])
 	return Message(s)
