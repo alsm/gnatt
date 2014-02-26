@@ -12,6 +12,7 @@ type TransGate struct {
 	stopsig    chan os.Signal
 	port       int
 	mqttbroker string
+	clients    Clients
 }
 
 func NewTransGate(gc *GatewayConfig, stopsig chan os.Signal) *TransGate {
@@ -119,6 +120,20 @@ func (tg *TransGate) handle_CONNECT(m *ConnectMessage, c uConn, r uAddr) {
 		fmt.Println(err)
 	} else {
 		fmt.Printf("clientid: %s\n", clientid)
+		fmt.Printf("remoteaddr: %s\n", r.r)
+		fmt.Printf("will: %v\n", m.Will())
+		if m.Will() {
+			// todo: will msg
+		}
+		//tclient := NewTransClient(string(clientid), c, r)
+		//tg.clients.AddClient(tclient)
+
+		// ca := NewConnackMessage(0) // todo: 0 ?
+		// if ioerr := client.Write(ca); ioerr != nil {
+		// 	fmt.Println(ioerr)
+		// } else {
+		// 	fmt.Println("CONNACK was sent")
+		// }
 	}
 }
 

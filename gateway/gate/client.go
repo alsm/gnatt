@@ -2,8 +2,9 @@ package gateway
 
 import (
 	"fmt"
-	. "github.com/alsm/gnatt/common/protocol"
 	"sync"
+
+	. "github.com/alsm/gnatt/common/protocol"
 )
 
 type Client struct {

@@ -235,11 +235,10 @@ func (ag *AggGate) handle_CONNECT(m *ConnectMessage, c uConn, r uAddr) {
 			// todo: do something about that
 		}
 
-		client := NewClient(string(m.ClientId()), c, r)
+		client := NewClient(clientid, c, r)
 		ag.clients.AddClient(client)
 
-		ca := NewConnackMessage(0)
-
+		ca := NewConnackMessage(0) // todo: 0 ?
 		if ioerr := client.Write(ca); ioerr != nil {
 			fmt.Println(ioerr)
 		} else {
