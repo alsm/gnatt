@@ -7,6 +7,8 @@ import (
 
 	. "github.com/alsm/gnatt/common/protocol"
 	"github.com/alsm/gnatt/common/utils"
+
+	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
 )
 
 type TransGate struct {
@@ -93,7 +95,7 @@ func (tg *TransGate) OnPacket(nbytes int, buffer []byte, con uConn, addr uAddr) 
 	case *PubrelMessage:
 		tg.handle_PUBREL(msg, addr)
 	case *SubscribeMessage:
-		tg.handle_SUBSCRIBE(msg, con, addr)
+		tg.handle_SUBSCRIBE(msg, addr)
 	case *SubackMessage:
 		tg.handle_SUBACK(msg, addr)
 	case *UnsubackMessage:
@@ -138,14 +140,19 @@ func (tg *TransGate) handle_CONNECT(m *ConnectMessage, c uConn, r uAddr) {
 		if m.Will() {
 			// todo: will msg
 		}
-		tclient := NewTransClient(string(clientid), c, r)
-		tg.clients.AddClient(tclient)
-
-		ca := NewConnackMessage(0) // todo: 0 ?
-		if ioerr := tclient.Write(ca); ioerr != nil {
-			fmt.Println(ioerr)
+		if tclient, err := NewTransClient(string(clientid), tg.mqttbroker, c, r); err != nil {
+			fmt.Println(err)
 		} else {
-			fmt.Println("CONNACK was sent")
+			tg.clients.AddClient(tclient)
+
+			// establish connection to mqtt broker
+
+			ca := NewConnackMessage(0) // todo: 0 ?
+			if ioerr := tclient.Write(ca); ioerr != nil {
+				fmt.Println(ioerr)
+			} else {
+				fmt.Println("CONNACK was sent")
+			}
 		}
 	}
 }
@@ -219,8 +226,18 @@ func (tg *TransGate) handle_PUBREL(m *PubrelMessage, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
-func (tg *TransGate) handle_SUBSCRIBE(m *SubscribeMessage, c uConn, r uAddr) {
+func (tg *TransGate) handle_SUBSCRIBE(m *SubscribeMessage, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	topic := ""
+	if m.TopicIdType() == 0 { // todo: other topic id types, also use enum
+		topic = string(m.TopicName())
+	} else {
+		fmt.Println("other topic id types not supported yet")
+		topic = "not_implemented"
+	}
+	tclient := tg.clients.GetClient(r).(*TransClient)
+	fmt.Printf("subscribe, qos: %d, topic: %s\n", m.QoS(), topic)
+	tclient.subscribeMqtt(MQTT.QoS(m.QoS()), topic)
 }
 
 func (tg *TransGate) handle_SUBACK(m *SubackMessage, r uAddr) {
@@ -245,6 +262,9 @@ func (tg *TransGate) handle_PINGRESP(m *PingrespMessage, r uAddr) {
 
 func (tg *TransGate) handle_DISCONNECT(m *DisconnectMessage, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	tclient := tg.clients.GetClient(r).(*TransClient)
+	tclient.disconnectMqtt()
+	tg.clients.RemoveClient(tclient.ClientId)
 }
 
 func (tg *TransGate) handle_WILLTOPICUPD(m *WillTopicUpdateMessage, r uAddr) {

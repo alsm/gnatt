@@ -12,11 +12,16 @@ import (
 type TransClient struct {
 	Client
 	mqttclient *MQTT.MqttClient
+	mqttbroker string
+	username   string
+	password   string
 }
 
-func NewTransClient(id string, c uConn, a uAddr) *TransClient {
+// Do not allow the creation of an MQTT-SN client if
+// a connection to the MQTT broker cannot be established
+func NewTransClient(id, mqttbroker string, c uConn, a uAddr) (*TransClient, error) {
 	fmt.Printf("NewTransClient, id: \"%s\"\n", id)
-	return &TransClient{
+	tc := &TransClient{
 		Client{
 			sync.RWMutex{},
 			id,
@@ -26,5 +31,52 @@ func NewTransClient(id string, c uConn, a uAddr) *TransClient {
 			make(map[uint16]*PublishMessage),
 		},
 		nil,
+		mqttbroker,
+		"",
+		"",
+	}
+	if err := tc.connectMqtt(id, mqttbroker); err != nil {
+		return nil, err
+	}
+	return tc, nil
+}
+
+func (tc *TransClient) connectMqtt(id, mqttbroker string) error {
+	opts := MQTT.NewClientOptions()
+	opts.SetBroker(mqttbroker)
+	opts.SetClientId(id)
+	if tc.username != "" {
+		opts.SetUsername(tc.username)
+		opts.SetPassword(tc.password)
+	}
+	opts.SetTraceLevel(MQTT.Warn)
+	tc.mqttclient = MQTT.NewClient(opts)
+
+	if _, err := tc.mqttclient.Start(); err != nil {
+		fmt.Printf("SN client \"%s\" failed to connect to mqtt broker", tc.ClientId)
+		return err
+	}
+	fmt.Println("TransClient connected to mqtt broker")
+	return nil
+}
+
+func (tc *TransClient) disconnectMqtt() {
+	tc.mqttclient.Disconnect(100)
+}
+
+func (tc *TransClient) subscribeMqtt(qos MQTT.QoS, topic string) {
+	// todo.. set handler to repub message to mqtt-sn client
+	var handler MQTT.MessageHandler = func(msg MQTT.Message) {
+		fmt.Printf("publish handler\n")
+		//msgSN := NewPublishMessage(msg.Dup(), msg.Retained(), 0, 0, 0, nil)
+		// do the right thing depending on qos
+		//tc.Write()
+	}
+
+	if r, e := tc.mqttclient.StartSubscription(handler, topic, qos); e != nil {
+		fmt.Printf("subscribe to \"%s\" failed: %s\n", topic, e)
+	} else {
+		<-r
+		fmt.Printf("subscribe to \"%s\" succeeded\n", topic)
 	}
 }
