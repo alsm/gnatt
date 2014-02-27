@@ -416,6 +416,7 @@ func (ag *AggGate) handle_PINGRESP(m *PingrespMessage, r uAddr) {
 func (ag *AggGate) handle_DISCONNECT(m *DisconnectMessage, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	fmt.Printf("duration: %d\n", m.Duration())
+	// todo: cleanup the client
 }
 
 func (ag *AggGate) handle_WILLTOPICUPD(m *WillTopicUpdateMessage, r uAddr) {
