@@ -245,7 +245,7 @@ func (tg *TransGate) handle_SUBSCRIBE(m *SubscribeMessage, r uAddr) {
 	}
 	tclient := tg.clients.GetClient(r).(*TransClient)
 	fmt.Printf("subscribe, qos: %d, topic: %s\n", m.QoS(), topic)
-	tclient.subscribeMqtt(MQTT.QoS(m.QoS()), topic)
+	tclient.subscribeMqtt(MQTT.QoS(m.QoS()), topic, &tg.tIndex)
 
 	su := NewSubackMessage(0, m.QoS(), 0, m.MsgId())
 

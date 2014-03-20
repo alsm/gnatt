@@ -64,12 +64,14 @@ func (tc *TransClient) disconnectMqtt() {
 	tc.mqttclient.Disconnect(100)
 }
 
-func (tc *TransClient) subscribeMqtt(qos MQTT.QoS, topic string) {
+func (tc *TransClient) subscribeMqtt(qos MQTT.QoS, topic string, tIndex *topicNames) {
 	var handler MQTT.MessageHandler = func(msg MQTT.Message) {
 		fmt.Printf("publish handler\n")
 
-		// how to get topicid ?
-		pm := NewPublishMessage(msg.DupFlag(), msg.RetainedFlag(), QoS(msg.QoS()), 0, 0, 0, msg.Payload())
+		tid := tIndex.getId(msg.Topic())
+		// is topicid type always 0 coming out of tIndex ?
+		// todo: msgid is not always 0
+		pm := NewPublishMessage(msg.DupFlag(), msg.RetainedFlag(), QoS(msg.QoS()), 0, tid, 0, msg.Payload())
 
 		if err := tc.Write(pm); err != nil {
 			fmt.Println(err)
