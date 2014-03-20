@@ -63,3 +63,20 @@ func (tc *TransClient) connectMqtt(id, mqttbroker string) error {
 func (tc *TransClient) disconnectMqtt() {
 	tc.mqttclient.Disconnect(100)
 }
+
+func (tc *TransClient) subscribeMqtt(qos MQTT.QoS, topic string) {
+	// todo.. set handler to repub message to mqtt-sn client
+	var handler MQTT.MessageHandler = func(msg MQTT.Message) {
+		fmt.Printf("publish handler\n")
+		//msgSN := NewPublishMessage(msg.Dup(), msg.Retained(), 0, 0, 0, nil)
+		// do the right thing depending on qos
+		//tc.Write()
+	}
+
+	if r, e := tc.mqttclient.StartSubscription(handler, topic, qos); e != nil {
+		fmt.Printf("subscribe to \"%s\" failed: %s\n", topic, e)
+	} else {
+		<-r
+		fmt.Printf("subscribe to \"%s\" succeeded\n", topic)
+	}
+}

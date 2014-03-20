@@ -7,6 +7,8 @@ import (
 
 	. "github.com/alsm/gnatt/common/protocol"
 	"github.com/alsm/gnatt/common/utils"
+
+	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
 )
 
 type TransGate struct {
@@ -93,7 +95,7 @@ func (tg *TransGate) OnPacket(nbytes int, buffer []byte, con uConn, addr uAddr) 
 	case *PubrelMessage:
 		tg.handle_PUBREL(msg, addr)
 	case *SubscribeMessage:
-		tg.handle_SUBSCRIBE(msg, con, addr)
+		tg.handle_SUBSCRIBE(msg, addr)
 	case *SubackMessage:
 		tg.handle_SUBACK(msg, addr)
 	case *UnsubackMessage:
@@ -224,8 +226,26 @@ func (tg *TransGate) handle_PUBREL(m *PubrelMessage, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
-func (tg *TransGate) handle_SUBSCRIBE(m *SubscribeMessage, c uConn, r uAddr) {
+func (tg *TransGate) handle_SUBSCRIBE(m *SubscribeMessage, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	topic := ""
+	if m.TopicIdType() == 0 { // todo: other topic id types, also use enum
+		topic = string(m.TopicName())
+	} else {
+		fmt.Println("other topic id types not supported yet")
+		topic = "not_implemented"
+	}
+	tclient := tg.clients.GetClient(r).(*TransClient)
+	fmt.Printf("subscribe, qos: %d, topic: %s\n", m.QoS(), topic)
+	tclient.subscribeMqtt(MQTT.QoS(m.QoS()), topic)
+
+	su := NewSubackMessage(0, m.QoS(), 0, m.MsgId())
+
+	if err := tclient.Write(su); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("SUBACK sent")
+	}
 }
 
 func (tg *TransGate) handle_SUBACK(m *SubackMessage, r uAddr) {
@@ -242,6 +262,14 @@ func (tg *TransGate) handle_UNSUBACK(m *UnsubackMessage, r uAddr) {
 
 func (tg *TransGate) handle_PINGREQ(m *PingreqMessage, c uConn, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	tclient := tg.clients.GetClient(r).(*TransClient)
+
+	resp := NewPingResp()
+	if err := tclient.Write(resp); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("PINGRESP sent")
+	}
 }
 
 func (tg *TransGate) handle_PINGRESP(m *PingrespMessage, r uAddr) {
