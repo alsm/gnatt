@@ -65,12 +65,17 @@ func (tc *TransClient) disconnectMqtt() {
 }
 
 func (tc *TransClient) subscribeMqtt(qos MQTT.QoS, topic string) {
-	// todo.. set handler to repub message to mqtt-sn client
 	var handler MQTT.MessageHandler = func(msg MQTT.Message) {
 		fmt.Printf("publish handler\n")
-		//msgSN := NewPublishMessage(msg.Dup(), msg.Retained(), 0, 0, 0, nil)
-		// do the right thing depending on qos
-		//tc.Write()
+
+		// how to get topicid ?
+		pm := NewPublishMessage(msg.DupFlag(), msg.RetainedFlag(), QoS(msg.QoS()), 0, 0, 0, msg.Payload())
+
+		if err := tc.Write(pm); err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println("incoming mqtt published to mqtt-sn")
+		}
 	}
 
 	if r, e := tc.mqttclient.StartSubscription(handler, topic, qos); e != nil {

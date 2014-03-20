@@ -208,6 +208,14 @@ func (tg *TransGate) handle_REGACK(m *RegackMessage, r uAddr) {
 
 func (tg *TransGate) handle_PUBLISH(m *PublishMessage, r uAddr) {
 	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	tclient := tg.clients.GetClient(r).(*TransClient)
+
+	topic := tg.tIndex.getTopic(m.TopicId())
+
+	receipt := tclient.mqttclient.Publish(MQTT.QoS(m.QoS()), topic, m.Data())
+
+	<-receipt
+	fmt.Println("PUBLISH published")
 }
 
 func (tg *TransGate) handle_PUBACK(m *PubackMessage, r uAddr) {

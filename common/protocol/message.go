@@ -693,17 +693,17 @@ type PublishMessage struct {
 	data []byte
 }
 
-func NewPublishMessage(d, r bool, q QoS, t byte, i, m uint16, z []byte) *PublishMessage {
+func NewPublishMessage(dup, ret bool, qos QoS, tidtype byte, tid, msgid uint16, data []byte) *PublishMessage {
 	var pm PublishMessage
-	pm.SetLength(7 + len(z))
+	pm.SetLength(7 + len(data))
 	pm.SetMsgType(PUBLISH)
-	pm.SetDUP(d)
-	pm.SetQoS(QoS(q))
-	pm.SetTopicIdType(t)
-	pm.SetTopicId(i)
-	pm.SetMsgId(m)
-	pm.SetRetain(r)
-	pm.SetData(z)
+	pm.SetDUP(dup)
+	pm.SetQoS(QoS(qos))
+	pm.SetTopicIdType(tidtype)
+	pm.SetTopicId(tid)
+	pm.SetMsgId(msgid)
+	pm.SetRetain(ret)
+	pm.SetData(data)
 	return &pm
 }
 
