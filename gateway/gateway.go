@@ -14,6 +14,8 @@ func main() {
 	stopsig := registerSignals()
 	gatewayconf := setup()
 
+	//initLogger(sys.Stdout, Sys.Stderr) // todo: configurable
+
 	if gatewayconf.IsAggregating() {
 		fmt.Println("GNATT Gateway starting in aggregating mode")
 		gateway = initAggregating(gatewayconf, stopsig)

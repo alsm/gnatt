@@ -65,7 +65,7 @@ func (tc *TransClient) disconnectMqtt() {
 }
 
 func (tc *TransClient) subscribeMqtt(qos MQTT.QoS, topic string, tIndex *topicNames) {
-	var handler MQTT.MessageHandler = func(msg MQTT.Message) {
+	var handler MQTT.MessageHandler = func(client *MQTT.MqttClient, msg MQTT.Message) {
 		fmt.Printf("publish handler\n")
 
 		tid := tIndex.getId(msg.Topic())
@@ -80,10 +80,14 @@ func (tc *TransClient) subscribeMqtt(qos MQTT.QoS, topic string, tIndex *topicNa
 		}
 	}
 
-	if r, e := tc.mqttclient.StartSubscription(handler, topic, qos); e != nil {
-		fmt.Printf("subscribe to \"%s\" failed: %s\n", topic, e)
+	if filter, e := MQTT.NewTopicFilter(topic, byte(qos)); e != nil {
+		fmt.Println(e)
 	} else {
-		<-r
-		fmt.Printf("subscribe to \"%s\" succeeded\n", topic)
+		if r, e := tc.mqttclient.StartSubscription(handler, filter); e != nil {
+			fmt.Printf("subscribe to \"%s\" failed: %s\n", topic, e)
+		} else {
+			<-r
+			fmt.Printf("subscribe to \"%s\" succeeded\n", topic)
+		}
 	}
 }

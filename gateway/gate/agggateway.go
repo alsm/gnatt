@@ -56,7 +56,7 @@ func NewAggGate(gc *GatewayConfig, stopsig chan os.Signal) *AggGate {
 		nil,
 	}
 
-	ag.handler = func(msg MQTT.Message) {
+	ag.handler = func(client *MQTT.MqttClient, msg MQTT.Message) {
 		ag.distribute(msg)
 	}
 
@@ -369,10 +369,14 @@ func (ag *AggGate) handle_SUBSCRIBE(m *SubscribeMessage, c uConn, r uAddr) {
 	} else {
 		if first {
 			fmt.Println("first subscriber of subscription, subscribbing via MQTT")
-			if receipt, sserr := ag.mqttclient.StartSubscription(ag.handler, topic, MQTT.QOS_TWO); sserr != nil {
-				fmt.Printf("StartSubscription error: %v\n", sserr)
+			if filter, e := MQTT.NewTopicFilter(topic, 2); e != nil {
+				fmt.Println(e)
 			} else {
-				<-receipt
+				if receipt, sserr := ag.mqttclient.StartSubscription(ag.handler, filter); sserr != nil {
+					fmt.Printf("StartSubscription error: %v\n", sserr)
+				} else {
+					<-receipt
+				}
 			}
 		}
 		// AG is subscribed at this point
