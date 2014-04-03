@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 
@@ -14,13 +13,13 @@ func main() {
 	stopsig := registerSignals()
 	gatewayconf := setup()
 
-	//initLogger(sys.Stdout, Sys.Stderr) // todo: configurable
+	G.InitLogger(os.Stdout, os.Stderr) // todo: configurable
 
 	if gatewayconf.IsAggregating() {
-		fmt.Println("GNATT Gateway starting in aggregating mode")
+		G.INFO.Println("GNATT Gateway starting in aggregating mode")
 		gateway = initAggregating(gatewayconf, stopsig)
 	} else {
-		fmt.Println("GNATT Gateway starting in transparent mode")
+		G.INFO.Println("GNATT Gateway starting in transparent mode")
 		gateway = initTransparent(gatewayconf, stopsig)
 	}
 
@@ -37,15 +36,13 @@ func setup() *G.GatewayConfig {
 
 	if configFile != "" {
 		if gc, err := G.ParseConfigFile(configFile); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			G.ERROR.Fatal(err)
 		} else {
 			return gc
 		}
 	}
 
-	fmt.Println("-configuration <file> must be specified")
-	os.Exit(1)
+	G.ERROR.Fatal("-configuration <file> must be specified")
 	return nil
 }
 

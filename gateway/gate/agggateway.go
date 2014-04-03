@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -69,14 +68,13 @@ func (ag *AggGate) Port() int {
 
 func (ag *AggGate) Start() {
 	go ag.awaitStop()
-	fmt.Println("Aggregating Gateway is starting")
+	INFO.Println("Aggregating Gateway is starting")
 	_, err := ag.mqttclient.Start()
 	if err != nil {
-		fmt.Println("Aggregating Gateway failed to start")
-		fmt.Println(err)
-		os.Exit(1)
+		ERROR.Println("Aggregating Gateway failed to start")
+		ERROR.Fatal(err)
 	}
-	fmt.Println("Aggregating Gateway is started")
+	INFO.Println("Aggregating Gateway is started")
 	listen(ag)
 }
 
@@ -84,10 +82,10 @@ func (ag *AggGate) Start() {
 // it does work using cmd.exe
 func (ag *AggGate) awaitStop() {
 	<-ag.stopsig
-	fmt.Println("Aggregating Gateway is stopping")
+	INFO.Println("Aggregating Gateway is stopping")
 	ag.mqttclient.Disconnect(500)
 	time.Sleep(500) //give broker some time to process DISCONNECT
-	fmt.Println("Aggregating Gateway is stopped")
+	INFO.Println("Aggregating Gateway is stopped")
 
 	// TODO: cleanly close down other goroutines
 
@@ -96,14 +94,14 @@ func (ag *AggGate) awaitStop() {
 
 func (ag *AggGate) distribute(msg MQTT.Message) {
 	topic := msg.Topic()
-	fmt.Printf("AG distributing a msg for topic \"%s\"\n", topic)
+	INFO.Printf("AG distributing a msg for topic \"%s\"\n", topic)
 
 	// collect a list of clients to which msg should be
 	// published
 	// then publish msg to those clients (async)
 
 	if clients, e := ag.tTree.SubscribersOf(topic); e != nil {
-		fmt.Println(e)
+		ERROR.Println(e)
 	} else {
 		for _, client := range clients {
 			go ag.publish(msg, client)
@@ -112,7 +110,7 @@ func (ag *AggGate) distribute(msg MQTT.Message) {
 }
 
 func (ag *AggGate) publish(msg MQTT.Message, client *Client) {
-	fmt.Printf("publish to client \"%s\"... ", client.ClientId)
+	INFO.Printf("publish to client \"%s\"... ", client.ClientId)
 	dup := msg.DupFlag()
 	qos := QoS(msg.QoS()) // todo: what to do for qos > 0?
 	ret := msg.RetainedFlag()
@@ -124,30 +122,29 @@ func (ag *AggGate) publish(msg MQTT.Message, client *Client) {
 	pm := NewPublishMessage(dup, ret, qos, topicidtype, topicid, msgid, pay)
 
 	if client.Registered(topicid) {
-		fmt.Printf("client \"%s\" already registered to %d, publish ahoy!\n", client, topicid)
+		INFO.Printf("client \"%s\" already registered to %d, publish ahoy!\n", client, topicid)
 		if err := client.Write(pm); err != nil {
-			fmt.Println(err)
+			ERROR.Println(err)
 		} else {
-			fmt.Printf("published a message to \"%s\"\n", client)
+			INFO.Printf("published a message to \"%s\"\n", client)
 		}
 	} else {
-		fmt.Printf("client \"%s\" is not registered to %d, must REGISTER first\n", client, topicid)
+		INFO.Printf("client \"%s\" is not registered to %d, must REGISTER first\n", client, topicid)
 		rm := NewRegisterMessage(topicid, msgid, top)
 		client.AddPendingMessage(pm)
 		if err := client.Write(rm); err != nil {
-			fmt.Printf("error writing REGISTER to \"%s\"\n", client)
+			ERROR.Printf("error writing REGISTER to \"%s\"\n", client)
 		} else {
-			fmt.Printf("sent REGISTER to \"%s\" for %d (%d bytes)\n", client, topicid, rm.Length())
+			INFO.Printf("sent REGISTER to \"%s\" for %d (%d bytes)\n", client, topicid, rm.Length())
 		}
 	}
 }
 
 func (ag *AggGate) OnPacket(nbytes int, buffer []byte, con uConn, addr uAddr) {
-	fmt.Println("OnPacket!")
-	fmt.Printf("bytes: %s\n", utils.Bytes2str(buffer[0:nbytes]))
+	INFO.Printf("OnPacket!  - bytes: %s\n", utils.Bytes2str(buffer[0:nbytes]))
 
 	rawmsg := Unpack(buffer[0:nbytes])
-	fmt.Printf("rawmsg.MsgType(): %s\n", rawmsg.MsgType())
+	INFO.Printf("rawmsg.MsgType(): %s\n", rawmsg.MsgType())
 
 	switch msg := rawmsg.(type) {
 	case *AdvertiseMessage:
@@ -205,31 +202,31 @@ func (ag *AggGate) OnPacket(nbytes int, buffer []byte, con uConn, addr uAddr) {
 	case *WillMsgRespMessage:
 		ag.handle_WILLMSGRESP(msg, addr)
 	default:
-		fmt.Printf("Unknown Message Type %T\n", msg)
+		ERROR.Printf("Unknown Message Type %T\n", msg)
 	}
 }
 
 func (ag *AggGate) handle_ADVERTISE(m *AdvertiseMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_SEARCHGW(m *SearchGwMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_GWINFO(m *GwInfoMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_CONNECT(m *ConnectMessage, c uConn, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 
 	if clientid, e := validateClientId(m.ClientId()); e != nil {
-		fmt.Println(e)
+		ERROR.Println(e)
 	} else {
-		fmt.Printf("clientid: %s\n", clientid)
-		fmt.Printf("remoteaddr: %s\n", r.r)
-		fmt.Printf("will: %v\n", m.Will())
+		INFO.Printf("clientid: %s\n", clientid)
+		INFO.Printf("remoteaddr: %s\n", r.r)
+		INFO.Printf("will: %v\n", m.Will())
 
 		if m.Will() {
 			// todo: do something about that
@@ -240,38 +237,38 @@ func (ag *AggGate) handle_CONNECT(m *ConnectMessage, c uConn, r uAddr) {
 
 		ca := NewConnackMessage(0) // todo: 0 ?
 		if ioerr := client.Write(ca); ioerr != nil {
-			fmt.Println(ioerr)
+			ERROR.Println(ioerr)
 		} else {
-			fmt.Println("CONNACK was sent")
+			INFO.Println("CONNACK was sent")
 		}
 	}
 }
 
 func (ag *AggGate) handle_CONNACK(m *ConnackMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_WILLTOPICREQ(m *WillTopicReqMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_WILLTOPIC(m *WillTopicMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_WILLMSGREQ(m *WillMsgReqMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_WILLMSG(m *WillMsgMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_REGISTER(m *RegisterMessage, c uConn, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	topic := string(m.TopicName())
-	fmt.Printf("msg id: %d\n", m.MsgId())
-	fmt.Printf("topic name: %s\n", topic)
+	INFO.Printf("msg id: %d\n", m.MsgId())
+	INFO.Printf("topic name: %s\n", topic)
 
 	var topicid uint16
 	if !ag.tIndex.containsTopic(topic) {
@@ -283,74 +280,74 @@ func (ag *AggGate) handle_REGISTER(m *RegisterMessage, c uConn, r uAddr) {
 	client := ag.clients.GetClient(r).(*Client)
 	client.Register(topicid)
 
-	fmt.Printf("ag topicid: %d\n", topicid)
+	INFO.Printf("ag topicid: %d\n", topicid)
 
 	ra := NewRegackMessage(topicid, m.MsgId(), 0)
-	fmt.Printf("ra.MsgId: %d\n", ra.MsgId())
+	INFO.Printf("ra.MsgId: %d\n", ra.MsgId())
 
 	if err := client.Write(ra); err != nil {
-		fmt.Println(err)
+		ERROR.Println(err)
 	} else {
-		fmt.Println("REGACK sent")
+		INFO.Println("REGACK sent")
 	}
 }
 
 func (ag *AggGate) handle_REGACK(m *RegackMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	// the gateway sends a register when there is a message
 	// that needs to be published, so we do that now
 	topicid := m.TopicId()
 	client := ag.clients.GetClient(r).(*Client)
 	pm := client.FetchPendingMessage(topicid)
 	if pm == nil {
-		fmt.Printf("no pending message for %s id %d\n", client, topicid)
+		ERROR.Printf("no pending message for %s id %d\n", client, topicid)
 	} else {
 		if err := client.Write(pm); err != nil {
-			fmt.Println(err)
+			ERROR.Println(err)
 		} else {
-			fmt.Printf("published a pending message to \"%s\"\n", client)
+			INFO.Printf("published a pending message to \"%s\"\n", client)
 		}
 	}
 }
 
 func (ag *AggGate) handle_PUBLISH(m *PublishMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 
-	fmt.Printf("m.TopicId: %d\n", m.TopicId())
-	fmt.Printf("m.Data: %s\n", string(m.Data()))
+	INFO.Printf("m.TopicId: %d\n", m.TopicId())
+	INFO.Printf("m.Data: %s\n", string(m.Data()))
 
 	topic := ag.tIndex.getTopic(m.TopicId())
 
 	// TODO: what should the MQTT-QoS be set as? In case of MQTTSN-QoS -1 ?
 	receipt := ag.mqttclient.Publish(MQTT.QoS(2), topic, m.Data())
-	fmt.Println("published, waiting for receipt")
+	INFO.Println("published, waiting for receipt")
 	<-receipt
-	fmt.Println("receipt received")
+	INFO.Println("receipt received")
 }
 
 func (ag *AggGate) handle_PUBACK(m *PubackMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_PUBCOMP(m *PubcompMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_PUBREC(m *PubrecMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_PUBREL(m *PubrelMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_SUBSCRIBE(m *SubscribeMessage, c uConn, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
-	fmt.Printf("m.TopicIdType: %d\n", m.TopicIdType())
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("m.TopicIdType: %d\n", m.TopicIdType())
 	topic := string(m.TopicName())
 	var topicid uint16
 	if m.TopicIdType() == 0 {
-		fmt.Printf("m.TopicName: %s\n", topic)
+		INFO.Printf("m.TopicName: %s\n", topic)
 		if !ContainsWildcard(topic) {
 			topicid = ag.tIndex.getId(topic)
 			if topicid == 0 {
@@ -364,16 +361,16 @@ func (ag *AggGate) handle_SUBSCRIBE(m *SubscribeMessage, c uConn, r uAddr) {
 
 	client := ag.clients.GetClient(r).(*Client)
 	if first, err := ag.tTree.AddSubscription(client, topic); err != nil {
-		fmt.Println("error adding subscription: %v\n", err)
+		INFO.Println("error adding subscription: %v\n", err)
 		// todo: suback an error message?
 	} else {
 		if first {
-			fmt.Println("first subscriber of subscription, subscribbing via MQTT")
+			INFO.Println("first subscriber of subscription, subscribbing via MQTT")
 			if filter, e := MQTT.NewTopicFilter(topic, 2); e != nil {
-				fmt.Println(e)
+				ERROR.Println(e)
 			} else {
 				if receipt, sserr := ag.mqttclient.StartSubscription(ag.handler, filter); sserr != nil {
-					fmt.Printf("StartSubscription error: %v\n", sserr)
+					ERROR.Printf("StartSubscription error: %v\n", sserr)
 				} else {
 					<-receipt
 				}
@@ -383,58 +380,58 @@ func (ag *AggGate) handle_SUBSCRIBE(m *SubscribeMessage, c uConn, r uAddr) {
 		client.Register(topicid)
 		suba := NewSubackMessage(0, m.QoS(), topicid, m.MsgId())
 		if nbytes, err := c.c.WriteToUDP(suba.Pack(), r.r); err != nil {
-			fmt.Println(err)
+			ERROR.Println(err)
 		} else {
-			fmt.Printf("SUBACK sent %d bytes\n", nbytes)
+			INFO.Printf("SUBACK sent %d bytes\n", nbytes)
 		}
 	}
 }
 
 func (ag *AggGate) handle_SUBACK(m *SubackMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_UNSUBSCRIBE(m *UnsubscribeMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_UNSUBACK(m *UnsubackMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_PINGREQ(m *PingreqMessage, c uConn, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	resp := NewPingResp()
 
 	if nbytes, err := c.c.WriteToUDP(resp.Pack(), r.r); err != nil {
-		fmt.Println(err)
+		ERROR.Println(err)
 	} else {
-		fmt.Printf("PINGRESP sent %d bytes\n", nbytes)
+		INFO.Printf("PINGRESP sent %d bytes\n", nbytes)
 	}
 }
 
 func (ag *AggGate) handle_PINGRESP(m *PingrespMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_DISCONNECT(m *DisconnectMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
-	fmt.Printf("duration: %d\n", m.Duration())
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("duration: %d\n", m.Duration())
 	// todo: cleanup the client
 }
 
 func (ag *AggGate) handle_WILLTOPICUPD(m *WillTopicUpdateMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_WILLTOPICRESP(m *WillTopicRespMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_WILLMSGUPD(m *WillMsgUpdateMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (ag *AggGate) handle_WILLMSGRESP(m *WillMsgRespMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }

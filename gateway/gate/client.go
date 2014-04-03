@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"fmt"
 	"sync"
 
 	. "github.com/alsm/gnatt/common/protocol"
@@ -17,7 +16,7 @@ type Client struct {
 }
 
 func NewClient(id string, c uConn, a uAddr) *Client {
-	fmt.Printf("NewClient, id: \"%s\"\n", id)
+	INFO.Printf("NewClient, id: \"%s\"\n", id)
 	return &Client{
 		sync.RWMutex{},
 		id,
@@ -36,7 +35,7 @@ func (c *Client) Write(m Message) error {
 func (c *Client) Register(topicId uint16) {
 	defer c.Unlock()
 	c.Lock()
-	fmt.Printf("client %s registered topicId %d\n", c.ClientId, topicId)
+	INFO.Printf("client %s registered topicId %d\n", c.ClientId, topicId)
 	c.registeredTopics[topicId] = true
 }
 

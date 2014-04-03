@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 )
@@ -35,13 +34,13 @@ func ContainsWildcard(topic string) bool {
 
 func ValidateTopicFilter(topic string) ([]string, error) {
 	if len(topic) == 0 {
-		return nil, fmt.Errorf("TopicFilter may not be empty string")
+		return nil, ErrTopicFilterEmptyString
 	}
 
 	levels := strings.Split(topic, "/")
 	for i, level := range levels {
 		if level == "#" && i != len(levels)-1 {
-			return nil, fmt.Errorf("multi-level wild card must be last level in topic")
+			return nil, ErrTopicFilterInvalidWildcard
 		}
 	}
 	return levels, nil
@@ -49,13 +48,13 @@ func ValidateTopicFilter(topic string) ([]string, error) {
 
 func ValidateTopicName(topic string) ([]string, error) {
 	if len(topic) == 0 {
-		return nil, fmt.Errorf("TopicName may not be empty string")
+		return nil, ErrTopicNameEmptyString
 	}
 
 	levels := strings.Split(topic, "/")
 	for _, level := range levels {
 		if level == "#" || level == "+" {
-			return nil, fmt.Errorf("TopicName may not contain wild card character")
+			return nil, ErrTopicNameContainsWildcard
 		}
 	}
 	return levels, nil
@@ -92,7 +91,7 @@ func (repo *topicNames) getId(topic string) uint16 {
 			break
 		}
 	}
-	fmt.Printf("get[%s] -> %d\n", topic, topicid)
+	INFO.Printf("get[%s] -> %d\n", topic, topicid)
 	return topicid
 }
 
@@ -101,7 +100,7 @@ func (repo *topicNames) getTopic(id uint16) string {
 	defer repo.RUnlock()
 	repo.RLock()
 	topic := repo.contents[id]
-	fmt.Printf("getTopic[%d] -> %s\n", id, topic)
+	INFO.Printf("getTopic[%d] -> %s\n", id, topic)
 	return topic
 }
 
@@ -111,6 +110,6 @@ func (repo *topicNames) putTopic(topic string) uint16 {
 	repo.Lock()
 	repo.next++
 	repo.contents[repo.next] = topic
-	fmt.Printf("put[%d] -> %s\n", repo.next, topic)
+	INFO.Printf("put[%d] -> %s\n", repo.next, topic)
 	return repo.next
 }

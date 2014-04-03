@@ -10,7 +10,7 @@ var (
 	ERROR *log.Logger
 )
 
-func initLogger(infoHandle, errorHandle io.Writer) {
+func InitLogger(infoHandle, errorHandle io.Writer) {
 	INFO = log.New(infoHandle, "INFO:  ", log.Ldate|log.Ltime)
 	ERROR = log.New(errorHandle, "ERROR: ", log.Ldate|log.Ltime)
 }

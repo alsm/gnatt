@@ -3,7 +3,6 @@ package gateway
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"strconv"
 	"strings"
@@ -49,7 +48,7 @@ func (gc *GatewayConfig) parseConfig(config string) error {
 			// skipping comment or blank line
 		} else {
 			if e = gc.setOption(k, v); e != nil {
-				fmt.Printf("Error in configuration on line %d\n", lineno)
+				ERROR.Printf("Error in configuration on line %d\n", lineno)
 				return e
 			}
 		}
@@ -64,9 +63,11 @@ func (gc *GatewayConfig) parseLine(line string) (string, string, error) {
 	}
 	fields := strings.Fields(line)
 	if len(fields) == 1 {
-		return "", "", fmt.Errorf("Missing value for config option: \"%s\"", fields[0])
+		ERROR.Printf("Missing value for config option: \"%s\"", fields[0])
+		return "", "", ErrMissingValueForConfigOption
 	} else if len(fields) > 2 {
-		return "", "", fmt.Errorf("Too many values supplied for config option: \"%s\"", fields[0])
+		ERROR.Printf("Too many values supplied for config option: \"%s\"", fields[0])
+		return "", "", ErrTooManyValuesForConfigOption
 	}
 	return fields[0], fields[1], nil
 }
@@ -89,7 +90,8 @@ func (gc *GatewayConfig) setOption(key, value string) error {
 	case "mqtt-timeout":
 		gc.mqtttimeout, e = checkNum("mqtt-timeout", value)
 	default:
-		return fmt.Errorf("Unknown config option: \"%s\"", key)
+		ERROR.Printf("Unknown config option: \"%s\"", key)
+		return ErrUnknownConfigOption
 	}
 	return e
 }
@@ -99,7 +101,8 @@ func checkURI(value string) (string, error) {
 		value[0:6] != "ssl://" &&
 		value[0:6] != "tls://" &&
 		value[0:7] != "tcps://" {
-		return "", fmt.Errorf("Invalid URI, must specify transport (ex: \"tcp://\"): \"%s\"", value)
+		ERROR.Printf("Invalid URI, must specify transport (ex: \"tcp://\"): \"%s\"", value)
+		return "", ErrNoTransportSpecified
 	}
 	// todo: check that a port is provided
 	// also there is probably a library way to verify a URI
@@ -114,14 +117,16 @@ func checkMode(value string) (bool, error) {
 	case "transparent":
 		isAggregating = false
 	default:
-		return false, fmt.Errorf("Invalid value specified for \"mode\": \"%s\"", value)
+		ERROR.Printf("Invalid value specified for \"mode\": \"%s\"", value)
+		return false, ErrInvalidModeSpecified
 	}
 	return isAggregating, nil
 }
 
 func checkNum(label, value string) (int, error) {
 	if p, e := strconv.Atoi(value); e != nil {
-		return 0, fmt.Errorf("Invalid value specified for \"%s\" (not a number): \"%s\"", label, value)
+		ERROR.Printf("Invalid value specified for \"%s\" (not a number): \"%s\"", label, value)
+		return 0, ErrNotANumber
 	} else {
 		return p, nil
 	}

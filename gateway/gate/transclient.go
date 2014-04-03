@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"fmt"
 	"sync"
 
 	. "github.com/alsm/gnatt/common/protocol"
@@ -20,7 +19,7 @@ type TransClient struct {
 // Do not allow the creation of an MQTT-SN client if
 // a connection to the MQTT broker cannot be established
 func NewTransClient(id, mqttbroker string, c uConn, a uAddr) (*TransClient, error) {
-	fmt.Printf("NewTransClient, id: \"%s\"\n", id)
+	INFO.Printf("NewTransClient, id: \"%s\"\n", id)
 	tc := &TransClient{
 		Client{
 			sync.RWMutex{},
@@ -53,10 +52,10 @@ func (tc *TransClient) connectMqtt(id, mqttbroker string) error {
 	tc.mqttclient = MQTT.NewClient(opts)
 
 	if _, err := tc.mqttclient.Start(); err != nil {
-		fmt.Printf("SN client \"%s\" failed to connect to mqtt broker", tc.ClientId)
+		ERROR.Printf("SN client \"%s\" failed to connect to mqtt broker", tc.ClientId)
 		return err
 	}
-	fmt.Println("TransClient connected to mqtt broker")
+	INFO.Println("TransClient connected to mqtt broker")
 	return nil
 }
 
@@ -66,7 +65,7 @@ func (tc *TransClient) disconnectMqtt() {
 
 func (tc *TransClient) subscribeMqtt(qos MQTT.QoS, topic string, tIndex *topicNames) {
 	var handler MQTT.MessageHandler = func(client *MQTT.MqttClient, msg MQTT.Message) {
-		fmt.Printf("publish handler\n")
+		INFO.Println("publish handler")
 
 		tid := tIndex.getId(msg.Topic())
 		// is topicid type always 0 coming out of tIndex ?
@@ -74,20 +73,20 @@ func (tc *TransClient) subscribeMqtt(qos MQTT.QoS, topic string, tIndex *topicNa
 		pm := NewPublishMessage(msg.DupFlag(), msg.RetainedFlag(), QoS(msg.QoS()), 0, tid, 0, msg.Payload())
 
 		if err := tc.Write(pm); err != nil {
-			fmt.Println(err)
+			ERROR.Println(err)
 		} else {
-			fmt.Println("incoming mqtt published to mqtt-sn")
+			INFO.Println("incoming mqtt published to mqtt-sn")
 		}
 	}
 
 	if filter, e := MQTT.NewTopicFilter(topic, byte(qos)); e != nil {
-		fmt.Println(e)
+		ERROR.Println(e)
 	} else {
 		if r, e := tc.mqttclient.StartSubscription(handler, filter); e != nil {
-			fmt.Printf("subscribe to \"%s\" failed: %s\n", topic, e)
+			ERROR.Printf("subscribe to \"%s\" failed: %s\n", topic, e)
 		} else {
 			<-r
-			fmt.Printf("subscribe to \"%s\" succeeded\n", topic)
+			INFO.Printf("subscribe to \"%s\" succeeded\n", topic)
 		}
 	}
 }

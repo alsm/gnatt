@@ -1,15 +1,13 @@
 package gateway
 
-import (
-	"fmt"
-)
-
 func validateClientId(clientid []byte) (string, error) {
 	if len(clientid) == 0 {
-		return "", fmt.Errorf("zero length client id not allowed")
+		ERROR.Println("zero length client id not allowed")
+		return "", ErrZeroLengthClientID
 	}
 	if len(clientid) > 23 {
-		return "", fmt.Errorf("client id too long")
+		ERROR.Println("client id longer than 23 characters")
+		return "", ErrClientIDTooLong
 	}
 	return string(clientid), nil
 }

@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"fmt"
 	"sync"
 )
 
@@ -24,7 +23,6 @@ func newNode() *node {
 
 // return true if level needed to be created, false otherwise
 func (n *node) goTo(level string) (*node, bool) {
-	//fmt.Printf("goTo(\"%s\")\n", level)
 	created := false
 	if n.children[level] == nil {
 		n.children[level] = newNode()
@@ -38,7 +36,6 @@ func (n *node) goTo(level string) (*node, bool) {
 func (n *node) addClient(client *Client) bool {
 	isFirst := len(n.clients) == 0
 	n.clients = append(n.clients, client)
-	//fmt.Printf("addClient(\"%s\")\n", client.ClientId)
 	return isFirst
 }
 
@@ -53,7 +50,7 @@ func NewTopicTree() *TopicTree {
 func (tt *TopicTree) AddSubscription(client *Client, topic string) (bool, error) {
 	defer tt.Unlock()
 	tt.Lock()
-	fmt.Printf("AddSubscription(\"%s\", \"%s\")\n", client.ClientId, topic)
+	INFO.Printf("AddSubscription(\"%s\", \"%s\")\n", client.ClientId, topic)
 	if levels, e := ValidateTopicFilter(topic); e != nil {
 		return false, e
 	} else {
@@ -78,22 +75,25 @@ func (tt *TopicTree) RemoveSubscription(s *Client, topic string) error {
 		n := tt.root
 		for _, level := range levels {
 			if n = n.children[level]; n == nil {
-				return fmt.Errorf("no subscription exists \"%s\"\n", topic)
+				ERROR.Printf("no subscription exists \"%s\"\n", topic)
+				return ErrNoSuchSubscriptionExists
 			}
 		}
 		if len(n.clients) < 1 {
-			return fmt.Errorf("no clients of subscription \"%s\"\n", topic)
+			ERROR.Printf("no clients of subscription \"%s\"\n", topic)
+			return ErrNoSubscribers
 		}
 		for i := 0; i < len(n.clients); i++ {
 			if n.clients[i].ClientId == s.ClientId {
 				// inexpensive way of removing from a slice
 				n.clients[i] = n.clients[len(n.clients)-1]
 				n.clients = n.clients[0 : len(n.clients)-1]
-				fmt.Printf("deleted subscription of client \"%s\"\n", s.ClientId)
+				INFO.Printf("deleted subscription of client \"%s\"\n", s.ClientId)
 				return nil
 			}
 		}
-		return fmt.Errorf("client \"%s\" was not subscribed to \"%s\"\n", s.ClientId, topic)
+		ERROR.Printf("client \"%s\" was not subscribed to \"%s\"\n", s.ClientId, topic)
+		return ErrClientNotSubscribed
 	}
 }
 

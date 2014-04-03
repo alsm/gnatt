@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"fmt"
 	"sync"
 )
 
@@ -29,7 +28,7 @@ func (c *Clients) GetClient(addr uAddr) StorableClient {
 func (c *Clients) AddClient(client StorableClient) bool {
 	defer c.Unlock()
 	c.Lock()
-	fmt.Printf("AddClient(%s - %s)\n", client, client.AddrStr())
+	INFO.Printf("AddClient(%s - %s)\n", client, client.AddrStr())
 	isNew := false
 	if c.clients[client.AddrStr()] == nil {
 		isNew = true
@@ -43,6 +42,6 @@ func (c *Clients) AddClient(client StorableClient) bool {
 func (c *Clients) RemoveClient(id string) {
 	defer c.Unlock()
 	c.Lock()
-	fmt.Printf("RemoveClient(%s)\n", id)
+	INFO.Printf("RemoveClient(%s)\n", id)
 	delete(c.clients, id)
 }

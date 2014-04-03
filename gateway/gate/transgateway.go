@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"fmt"
 	"os"
 	"sync"
 
@@ -43,23 +42,21 @@ func (tg *TransGate) Port() int {
 
 func (tg *TransGate) Start() {
 	go tg.awaitStop()
-	fmt.Println("Transparent Gateway is starting")
-	fmt.Println("Transparent Gataway is started")
+	INFO.Println("Transparent Gataway is started")
 	listen(tg)
 }
 
 func (tg *TransGate) awaitStop() {
 	<-tg.stopsig
-	fmt.Println("Transparent Gateway is stopping")
-	fmt.Println("Transparent Gateway is stopped")
+	INFO.Println("Transparent Gateway is stopped")
 	os.Exit(0)
 }
 
 func (tg *TransGate) OnPacket(nbytes int, buffer []byte, con uConn, addr uAddr) {
-	fmt.Println("TG OnPacket!")
-	fmt.Printf("bytes: %s\n", utils.Bytes2str(buffer[0:nbytes]))
+	INFO.Println("TG OnPacket!")
+	INFO.Printf("bytes: %s\n", utils.Bytes2str(buffer[0:nbytes]))
 	rawmsg := Unpack(buffer[0:nbytes])
-	fmt.Printf("rawmsg.MsgType(): %s\n", rawmsg.MsgType())
+	INFO.Printf("rawmsg.MsgType(): %s\n", rawmsg.MsgType())
 
 	switch msg := rawmsg.(type) {
 	case *AdvertiseMessage:
@@ -113,35 +110,35 @@ func (tg *TransGate) OnPacket(nbytes int, buffer []byte, con uConn, addr uAddr) 
 	case *WillMsgRespMessage:
 		tg.handle_WILLMSGRESP(msg, addr)
 	default:
-		fmt.Printf("Unknown Message Type %T\n", msg)
+		ERROR.Printf("Unknown Message Type %T\n", msg)
 	}
 }
 
 func (tg *TransGate) handle_ADVERTISE(m *AdvertiseMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_SEARCHGW(m *SearchGwMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_GWINFO(m *GwInfoMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_CONNECT(m *ConnectMessage, c uConn, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	if clientid, err := validateClientId(m.ClientId()); err != nil {
-		fmt.Println(err)
+		ERROR.Println(err)
 	} else {
-		fmt.Printf("clientid: %s\n", clientid)
-		fmt.Printf("remoteaddr: %s\n", r.r)
-		fmt.Printf("will: %v\n", m.Will())
+		INFO.Printf("clientid: %s\n", clientid)
+		INFO.Printf("remoteaddr: %s\n", r.r)
+		INFO.Printf("will: %v\n", m.Will())
 		if m.Will() {
 			// todo: will msg
 		}
 		if tclient, err := NewTransClient(string(clientid), tg.mqttbroker, c, r); err != nil {
-			fmt.Println(err)
+			ERROR.Println(err)
 		} else {
 			tg.clients.AddClient(tclient)
 
@@ -149,36 +146,36 @@ func (tg *TransGate) handle_CONNECT(m *ConnectMessage, c uConn, r uAddr) {
 
 			ca := NewConnackMessage(0) // todo: 0 ?
 			if ioerr := tclient.Write(ca); ioerr != nil {
-				fmt.Println(ioerr)
+				ERROR.Println(ioerr)
 			} else {
-				fmt.Println("CONNACK was sent")
+				INFO.Println("CONNACK was sent")
 			}
 		}
 	}
 }
 
 func (tg *TransGate) handle_CONNACK(m *ConnackMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_WILLTOPICREQ(m *WillTopicReqMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_WILLTOPIC(m *WillTopicMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_WILLMSGREQ(m *WillMsgReqMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_WILLMSG(m *WillMsgMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_REGISTER(m *RegisterMessage, c uConn, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	topic := string(m.TopicName())
 	var topicid uint16
 	if !tg.tIndex.containsTopic(topic) {
@@ -187,27 +184,27 @@ func (tg *TransGate) handle_REGISTER(m *RegisterMessage, c uConn, r uAddr) {
 		topicid = tg.tIndex.getId(topic)
 	}
 
-	fmt.Printf("tg topicid: %d\n", topicid)
+	INFO.Printf("tg topicid: %d\n", topicid)
 
 	tclient := tg.clients.GetClient(r).(*TransClient)
 	tclient.Register(topicid)
 
 	ra := NewRegackMessage(topicid, m.MsgId(), 0)
-	fmt.Printf("ra.Msgid: %d\n", ra.MsgId())
+	INFO.Printf("ra.Msgid: %d\n", ra.MsgId())
 
 	if err := tclient.Write(ra); err != nil {
-		fmt.Println(err)
+		ERROR.Println(err)
 	} else {
-		fmt.Println("REGACK sent")
+		INFO.Println("REGACK sent")
 	}
 }
 
 func (tg *TransGate) handle_REGACK(m *RegackMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_PUBLISH(m *PublishMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	tclient := tg.clients.GetClient(r).(*TransClient)
 
 	topic := tg.tIndex.getTopic(m.TopicId())
@@ -215,94 +212,94 @@ func (tg *TransGate) handle_PUBLISH(m *PublishMessage, r uAddr) {
 	receipt := tclient.mqttclient.Publish(MQTT.QoS(m.QoS()), topic, m.Data())
 
 	<-receipt
-	fmt.Println("PUBLISH published")
+	INFO.Println("PUBLISH published")
 }
 
 func (tg *TransGate) handle_PUBACK(m *PubackMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_PUBCOMP(m *PubcompMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_PUBREC(m *PubrecMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_PUBREL(m *PubrelMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_SUBSCRIBE(m *SubscribeMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	topic := ""
 	if m.TopicIdType() == 0 { // todo: other topic id types, also use enum
 		topic = string(m.TopicName())
 	} else {
-		fmt.Println("other topic id types not supported yet")
+		ERROR.Println("other topic id types not supported yet")
 		topic = "not_implemented"
 	}
 	tclient := tg.clients.GetClient(r).(*TransClient)
-	fmt.Printf("subscribe, qos: %d, topic: %s\n", m.QoS(), topic)
+	INFO.Printf("subscribe, qos: %d, topic: %s\n", m.QoS(), topic)
 	tclient.subscribeMqtt(MQTT.QoS(m.QoS()), topic, &tg.tIndex)
 
 	su := NewSubackMessage(0, m.QoS(), 0, m.MsgId())
 
 	if err := tclient.Write(su); err != nil {
-		fmt.Println(err)
+		ERROR.Println(err)
 	} else {
-		fmt.Println("SUBACK sent")
+		INFO.Println("SUBACK sent")
 	}
 }
 
 func (tg *TransGate) handle_SUBACK(m *SubackMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_UNSUBSCRIBE(m *UnsubscribeMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_UNSUBACK(m *UnsubackMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_PINGREQ(m *PingreqMessage, c uConn, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	tclient := tg.clients.GetClient(r).(*TransClient)
 
 	resp := NewPingResp()
 	if err := tclient.Write(resp); err != nil {
-		fmt.Println(err)
+		ERROR.Println(err)
 	} else {
-		fmt.Println("PINGRESP sent")
+		INFO.Println("PINGRESP sent")
 	}
 }
 
 func (tg *TransGate) handle_PINGRESP(m *PingrespMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_DISCONNECT(m *DisconnectMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 	tclient := tg.clients.GetClient(r).(*TransClient)
 	tclient.disconnectMqtt()
 	tg.clients.RemoveClient(tclient.ClientId)
 }
 
 func (tg *TransGate) handle_WILLTOPICUPD(m *WillTopicUpdateMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_WILLTOPICRESP(m *WillTopicRespMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_WILLMSGUPD(m *WillMsgUpdateMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
 
 func (tg *TransGate) handle_WILLMSGRESP(m *WillMsgRespMessage, r uAddr) {
-	fmt.Printf("handle_%s from %v\n", m.MsgType(), r.r)
+	INFO.Printf("handle_%s from %v\n", m.MsgType(), r.r)
 }
