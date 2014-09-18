@@ -1,4 +1,4 @@
-package gnatt
+package packets
 
 import (
 	//"fmt"
