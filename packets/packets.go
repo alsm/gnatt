@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"io"
 )
 
@@ -26,7 +25,6 @@ func ReadPacket(r io.Reader) (m Message, err error) {
 	var h Header
 	packet := make([]byte, 1500)
 	r.Read(packet)
-	fmt.Println(packet[:25])
 	packetBuf := bytes.NewBuffer(packet)
 	h.unpack(packetBuf)
 	m = NewMessageWithHeader(h)
@@ -38,19 +36,13 @@ func ReadPacket(r io.Reader) (m Message, err error) {
 }
 
 func (h *Header) unpack(b io.Reader) {
-	fmt.Println("Header unpack")
 	lengthCheck := readByte(b)
-	fmt.Println("lengthCheck", lengthCheck)
 	if lengthCheck == 0x01 {
-		fmt.Println("Reading full length")
 		h.Length = readUint16(b)
 	} else {
-		fmt.Println("Setting length", lengthCheck)
 		h.Length = uint16(lengthCheck)
 	}
-	fmt.Println("Reading type byte")
 	h.MessageType = readByte(b)
-	fmt.Println("Unpack finished")
 }
 
 func (h *Header) pack() bytes.Buffer {
@@ -74,7 +66,7 @@ func NewMessage(msgType byte) (m Message) {
 	case GWINFO:
 		m = &GwInfoMessage{Header: Header{MessageType: GWINFO}}
 	case CONNECT:
-		m = &ConnectMessage{Header: Header{MessageType: CONNECT}}
+		m = &ConnectMessage{Header: Header{MessageType: CONNECT}, ProtocolId: 0x01}
 	case CONNACK:
 		m = &ConnackMessage{Header: Header{MessageType: CONNACK, Length: 3}}
 	case WILLTOPICREQ:
