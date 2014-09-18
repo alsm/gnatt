@@ -205,6 +205,14 @@ const (
 	DUPFLAG      = 0x80
 )
 
+// Errors
+const (
+	ACCEPTED         = 0x00
+	REJ_CONGESTION   = 0x01
+	REJ_INVALID_TID  = 0x02
+	REJ_NOT_SUPORTED = 0x03
+)
+
 // Message Types
 const (
 	ADVERTISE     = 0x00

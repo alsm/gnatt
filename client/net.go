@@ -29,20 +29,20 @@ func (c *SNClient) receive() {
 func (c *SNClient) send() {
 	DEBUG.Println(NET, "started send()")
 	for {
-		m := <-c.outgoing
-		DEBUG.Println(NET, "sending message", MessageNames[m.MessageType()])
-		switch m.MessageType() {
+		mt := <-c.outgoing
+		DEBUG.Println(NET, "sending message", MessageNames[mt.m.MessageType()])
+		switch mt.m.MessageType() {
 		case REGISTER:
-			m.(*RegisterMessage).MessageId = 0x01
+			mt.m.(*RegisterMessage).MessageId = c.MessageIds.getId(mt.t)
 		case PUBLISH:
-			m.(*PublishMessage).MessageId = 0x01
+			mt.m.(*PublishMessage).MessageId = c.MessageIds.getId(mt.t)
 		case SUBSCRIBE:
-			m.(*SubscribeMessage).MessageId = 0x01
+			mt.m.(*SubscribeMessage).MessageId = c.MessageIds.getId(mt.t)
 		case UNSUBSCRIBE:
-			m.(*UnsubscribeMessage).MessageId = 0x01
+			mt.m.(*UnsubscribeMessage).MessageId = c.MessageIds.getId(mt.t)
 		}
-		m.Write(c.conn)
-		if m.MessageType() == DISCONNECT {
+		mt.m.Write(c.conn)
+		if mt.m.MessageType() == DISCONNECT {
 			DEBUG.Println(NET, "Sent DISCONNECT, closing connection")
 			c.conn.Close()
 			return
@@ -58,8 +58,34 @@ func (c *SNClient) handle() {
 			DEBUG.Println(NET, "got message off <-incoming", MessageNames[m.MessageType()])
 			switch m.MessageType() {
 			case CONNACK:
+			case REGISTER:
+				r := m.(*RegisterMessage)
+				c.RegisteredTopics[string(r.TopicName)] = r.TopicId
 			case REGACK:
+				ra := m.(*RegackMessage)
+				t := c.MessageIds.getToken(ra.MessageId).(*RegisterToken)
+				t.ReturnCode = ra.ReturnCode
+				switch ra.ReturnCode {
+				case ACCEPTED:
+					DEBUG.Println(NET, t.TopicName, "registered as", ra.TopicId)
+					c.RegisteredTopics[t.TopicName] = ra.TopicId
+					t.TopicId = ra.TopicId
+				default:
+					ERROR.Println(NET, ra.ReturnCode, "for REGISTER for", string(t.TopicName))
+				}
+				t.flowComplete()
 			case SUBACK:
+				sa := m.(*SubackMessage)
+				t := c.MessageIds.getToken(sa.MessageId).(*SubscribeToken)
+				t.ReturnCode = sa.ReturnCode
+				switch sa.ReturnCode {
+				case ACCEPTED:
+					t.Qos = sa.Qos
+					t.TopicId = sa.TopicId
+				default:
+					ERROR.Println(NET, sa.ReturnCode, "for SUBSCRIBE to", t.TopicName)
+				}
+				t.flowComplete()
 			case PUBLISH:
 			case PUBACK:
 			case DISCONNECT:
