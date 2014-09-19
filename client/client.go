@@ -73,14 +73,22 @@ func (c *SNClient) Subscribe(topic string, qos byte) *SubscribeToken {
 	t := newToken(SUBSCRIBE).(*SubscribeToken)
 	t.TopicName = topic
 	s := NewMessage(SUBSCRIBE).(*SubscribeMessage)
-	DEBUG.Println(c.RegisteredTopics, c.RegisteredTopics[topic])
 	if len(topic) > 2 {
-		s.TopicIdType = 0x01
-		s.TopicId = c.RegisteredTopics[topic]
+		s.TopicIdType = 0x00
 	} else {
 		s.TopicIdType = 0x02
-		s.TopicName = []byte(topic)
 	}
+	s.TopicName = []byte(topic)
+	s.Qos = qos
+	c.outgoing <- &MessageAndToken{m: s, t: t}
+	return t
+}
+
+func (c *SNClient) SubscribePredefined(topicid uint16, qos byte) *SubscribeToken {
+	t := newToken(SUBSCRIBE).(*SubscribeToken)
+	s := NewMessage(SUBSCRIBE).(*SubscribeMessage)
+	s.TopicIdType = 0x01
+	s.TopicId = topicid
 	s.Qos = qos
 	c.outgoing <- &MessageAndToken{m: s, t: t}
 	return t
