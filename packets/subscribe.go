@@ -35,15 +35,20 @@ func (s *SubscribeMessage) decodeFlags(b byte) {
 }
 
 func (s *SubscribeMessage) Write(w io.Writer) error {
-	s.Header.Length = 7
+	switch s.TopicIdType {
+	case 0x00, 0x02:
+		s.Header.Length = uint16(len(s.TopicName) + 5)
+	case 0x01:
+		s.Header.Length = 7
+	}
 	packet := s.Header.pack()
 	packet.WriteByte(SUBSCRIBE)
 	packet.WriteByte(s.encodeFlags())
 	packet.Write(encodeUint16(s.MessageId))
 	switch s.TopicIdType {
-	case 0x02:
+	case 0x00, 0x02:
 		packet.Write(s.TopicName)
-	case 0x00, 0x01:
+	case 0x01:
 		packet.Write(encodeUint16(s.TopicId))
 	}
 	_, err := packet.WriteTo(w)
@@ -55,9 +60,9 @@ func (s *SubscribeMessage) Unpack(b io.Reader) {
 	s.decodeFlags(readByte(b))
 	s.MessageId = readUint16(b)
 	switch s.TopicIdType {
-	case 0x02:
+	case 0x00, 0x02:
 		b.Read(s.TopicName)
-	case 0x00, 0x01:
+	case 0x01:
 		s.TopicId = readUint16(b)
 	}
 }

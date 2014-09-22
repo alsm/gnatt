@@ -58,6 +58,11 @@ func (c *SNClient) handle() {
 			DEBUG.Println(NET, "got message off <-incoming", MessageNames[m.MessageType()])
 			switch m.MessageType() {
 			case CONNACK:
+				ca := m.(*ConnackMessage)
+				c.setState(CONNECTED)
+				ct := c.suTokens[CONNECT].(*ConnectToken)
+				ct.ReturnCode = ca.ReturnCode
+				ct.flowComplete()
 			case REGISTER:
 				r := m.(*RegisterMessage)
 				c.RegisteredTopics[string(r.TopicName)] = r.TopicId
@@ -82,13 +87,44 @@ func (c *SNClient) handle() {
 				case ACCEPTED:
 					t.Qos = sa.Qos
 					t.TopicId = sa.TopicId
+					c.RegisteredTopics[t.TopicName] = sa.TopicId
+					c.MessageHandlers[sa.TopicId] = t.handler
 				default:
 					ERROR.Println(NET, sa.ReturnCode, "for SUBSCRIBE to", t.TopicName)
 				}
 				t.flowComplete()
 			case PUBLISH:
+				p := m.(*PublishMessage)
+				switch p.TopicIdType {
+				case 0x00:
+					if handler, ok := c.MessageHandlers[p.TopicId]; ok {
+						go handler(c, p)
+					}
+				default:
+					if c.DefaultMessageHandler != nil {
+						go c.DefaultMessageHandler(c, p)
+					}
+				}
 			case PUBACK:
+				pa := m.(*PubackMessage)
+				t := c.MessageIds.getToken(pa.MessageId).(*PublishToken)
+				t.ReturnCode = pa.ReturnCode
+				t.TopicId = pa.TopicId
+				t.flowComplete()
 			case DISCONNECT:
+				c.setState(UNCONNECTED)
+				DEBUG.Println(NET, "Received DISCONNECT, closing socket")
+				c.conn.Close()
+			case WILLTOPICREQ:
+				wm := NewMessage(WILLTOPIC).(*WillTopicMessage)
+				wm.WillTopic = []byte(c.will.Topic)
+				wm.Qos = c.will.Qos
+				wm.Retain = c.will.Retain
+				c.outgoing <- &MessageAndToken{m: wm, t: nil}
+			case WILLMSGREQ:
+				wm := NewMessage(WILLMSG).(*WillMsgMessage)
+				wm.WillMsg = c.will.Data
+				c.outgoing <- &MessageAndToken{m: wm, t: nil}
 			}
 		}
 	}

@@ -31,17 +31,25 @@ func (wt *WillTopicMessage) decodeFlags(b byte) {
 }
 
 func (wt *WillTopicMessage) Write(w io.Writer) error {
-	wt.Header.Length = uint16(len(wt.WillTopic) + 3)
+	if len(wt.WillTopic) == 0 {
+		wt.Header.Length = 2
+	} else {
+		wt.Header.Length = uint16(len(wt.WillTopic) + 3)
+	}
 	packet := wt.Header.pack()
 	packet.WriteByte(wt.Header.MessageType)
-	packet.WriteByte(wt.encodeFlags())
-	packet.Write(wt.WillTopic)
+	if wt.Header.Length > 2 {
+		packet.WriteByte(wt.encodeFlags())
+		packet.Write(wt.WillTopic)
+	}
 	_, err := packet.WriteTo(w)
 
 	return err
 }
 
 func (wt *WillTopicMessage) Unpack(b io.Reader) {
-	wt.decodeFlags(readByte(b))
-	b.Read(wt.WillTopic)
+	if wt.Header.Length > 2 {
+		wt.decodeFlags(readByte(b))
+		b.Read(wt.WillTopic)
+	}
 }

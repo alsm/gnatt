@@ -27,5 +27,7 @@ func (g *GwInfoMessage) Write(w io.Writer) error {
 
 func (g *GwInfoMessage) Unpack(b io.Reader) {
 	g.GatewayId = readByte(b)
-	b.Read(g.GatewayAddress)
+	if g.Header.Length > 3 {
+		b.Read(g.GatewayAddress)
+	}
 }

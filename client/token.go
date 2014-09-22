@@ -19,6 +19,7 @@ type Token interface {
 type baseToken struct {
 	complete chan struct{}
 	ready    bool
+	err      error
 }
 
 // Wait will wait indefinitely for the Token to complete, ie the Publish
@@ -47,6 +48,8 @@ func (b *baseToken) flowComplete() {
 
 func newToken(tType byte) Token {
 	switch tType {
+	case CONNECT:
+		return &ConnectToken{baseToken: baseToken{complete: make(chan struct{})}}
 	case REGISTER:
 		return &RegisterToken{baseToken: baseToken{complete: make(chan struct{})}}
 	case SUBSCRIBE:
@@ -55,8 +58,15 @@ func newToken(tType byte) Token {
 		return &PublishToken{baseToken: baseToken{complete: make(chan struct{})}}
 	case UNSUBSCRIBE:
 		return &UnsubscribeToken{baseToken: baseToken{complete: make(chan struct{})}}
+	case WILLTOPIC, WILLMSG, WILLMSGUPD, WILLTOPICUPD:
+		return &WillToken{baseToken: baseToken{complete: make(chan struct{})}}
 	}
 	return nil
+}
+
+type ConnectToken struct {
+	baseToken
+	ReturnCode byte
 }
 
 type RegisterToken struct {
@@ -69,11 +79,12 @@ type RegisterToken struct {
 type PublishToken struct {
 	baseToken
 	TopicId    uint16
-	ReturnCode uint16
+	ReturnCode byte
 }
 
 type SubscribeToken struct {
 	baseToken
+	handler    MessageHandler
 	Qos        byte
 	TopicName  string
 	TopicId    uint16
@@ -81,5 +92,9 @@ type SubscribeToken struct {
 }
 
 type UnsubscribeToken struct {
+	baseToken
+}
+
+type WillToken struct {
 	baseToken
 }
