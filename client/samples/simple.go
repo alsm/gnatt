@@ -11,7 +11,10 @@ import (
 
 func main() {
 	gnatt.DEBUG = log.New(os.Stdout, "", 0)
-	c := gnatt.NewClient("udp://127.0.0.1:1884", "gotestclient")
+	c, err := gnatt.NewClient("udp://127.0.0.1:1884", "gotestclient")
+	if err != nil {
+		panic(err)
+	}
 	c.SetWill("testwill", 1, true, []byte("Will test"))
 	ct := c.Connect()
 	ct.Wait()

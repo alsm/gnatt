@@ -29,19 +29,21 @@ const (
 
 type SNClient struct {
 	sync.RWMutex
-	ClientId              string
-	RegisteredTopics      map[string]uint16
-	OutstandingMessages   map[uint16]Message
-	MessageHandlers       map[uint16]MessageHandler
-	DefaultMessageHandler MessageHandler
-	MessageIds            mids
-	will                  Will
-	suTokens              map[int]Token
-	conn                  net.Conn
-	incoming              chan Message
-	outgoing              chan *MessageAndToken
-	stop                  chan struct{}
-	state                 byte
+	ClientId                  string
+	OutstandingMessages       map[uint16]Message
+	RegisteredTopics          map[string]uint16
+	MessageHandlers           map[uint16]MessageHandler
+	PredefinedTopics          map[string]uint16
+	PredefinedMessageHandlers map[uint16]MessageHandler
+	DefaultMessageHandler     MessageHandler
+	MessageIds                mids
+	will                      Will
+	suTokens                  map[int]Token
+	conn                      net.Conn
+	incoming                  chan Message
+	outgoing                  chan *MessageAndToken
+	stop                      chan struct{}
+	state                     byte
 }
 
 func NewClient(server string, clientid string) (*SNClient, error) {
@@ -59,6 +61,8 @@ func NewClient(server string, clientid string) (*SNClient, error) {
 	}
 	c.RegisteredTopics = make(map[string]uint16)
 	c.MessageHandlers = make(map[uint16]MessageHandler)
+	c.PredefinedTopics = make(map[string]uint16)
+	c.PredefinedMessageHandlers = make(map[uint16]MessageHandler)
 	c.suTokens = make(map[int]Token)
 	c.incoming = make(chan Message)
 	c.outgoing = make(chan *MessageAndToken)
@@ -68,7 +72,7 @@ func NewClient(server string, clientid string) (*SNClient, error) {
 	go c.send()
 	go c.handle()
 
-	return c
+	return c, nil
 }
 
 func (c *SNClient) setState(s byte) {
@@ -118,8 +122,10 @@ func (c *SNClient) Subscribe(topic string, qos byte, mh MessageHandler) *Subscri
 	s := NewMessage(SUBSCRIBE).(*SubscribeMessage)
 	if len(topic) > 2 {
 		s.TopicIdType = 0x00
+		t.topicType = 0x00
 	} else {
 		s.TopicIdType = 0x02
+		t.topicType = 0x02
 	}
 	s.TopicName = []byte(topic)
 	s.Qos = qos
@@ -127,8 +133,10 @@ func (c *SNClient) Subscribe(topic string, qos byte, mh MessageHandler) *Subscri
 	return t
 }
 
-func (c *SNClient) SubscribePredefined(topicid uint16, qos byte) *SubscribeToken {
+func (c *SNClient) SubscribePredefined(topicid uint16, qos byte, mh MessageHandler) *SubscribeToken {
 	t := newToken(SUBSCRIBE).(*SubscribeToken)
+	t.handler = mh
+	t.topicType = 0x01
 	s := NewMessage(SUBSCRIBE).(*SubscribeMessage)
 	s.TopicIdType = 0x01
 	s.TopicId = topicid

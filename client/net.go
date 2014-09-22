@@ -66,6 +66,11 @@ func (c *SNClient) handle() {
 			case REGISTER:
 				r := m.(*RegisterMessage)
 				c.RegisteredTopics[string(r.TopicName)] = r.TopicId
+				ra := NewMessage(REGACK).(*RegackMessage)
+				ra.MessageId = r.MessageId
+				ra.TopicId = r.TopicId
+				ra.ReturnCode = ACCEPTED
+				c.outgoing <- &MessageAndToken{m: ra, t: nil}
 			case REGACK:
 				ra := m.(*RegackMessage)
 				t := c.MessageIds.getToken(ra.MessageId).(*RegisterToken)
@@ -86,9 +91,16 @@ func (c *SNClient) handle() {
 				switch sa.ReturnCode {
 				case ACCEPTED:
 					t.Qos = sa.Qos
-					t.TopicId = sa.TopicId
-					c.RegisteredTopics[t.TopicName] = sa.TopicId
-					c.MessageHandlers[sa.TopicId] = t.handler
+					if sa.TopicId > 0x00 {
+						t.TopicId = sa.TopicId
+						switch t.topicType {
+						case 0x01:
+							c.PredefinedMessageHandlers[sa.TopicId] = t.handler
+						case 0x00, 0x02:
+							c.RegisteredTopics[t.TopicName] = sa.TopicId
+							c.MessageHandlers[sa.TopicId] = t.handler
+						}
+					}
 				default:
 					ERROR.Println(NET, sa.ReturnCode, "for SUBSCRIBE to", t.TopicName)
 				}

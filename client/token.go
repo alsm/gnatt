@@ -85,6 +85,7 @@ type PublishToken struct {
 type SubscribeToken struct {
 	baseToken
 	handler    MessageHandler
+	topicType  byte
 	Qos        byte
 	TopicName  string
 	TopicId    uint16
