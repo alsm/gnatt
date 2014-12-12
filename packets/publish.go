@@ -7,9 +7,9 @@ import (
 type PublishMessage struct {
 	Header
 	Dup         bool
+	Retain      bool
 	Qos         byte
 	TopicIdType byte
-	Retain      bool
 	TopicId     uint16
 	MessageId   uint16
 	Data        []byte

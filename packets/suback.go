@@ -7,9 +7,9 @@ import (
 type SubackMessage struct {
 	Header
 	Qos        byte
+	ReturnCode byte
 	TopicId    uint16
 	MessageId  uint16
-	ReturnCode byte
 }
 
 func (s *SubackMessage) MessageType() byte {
