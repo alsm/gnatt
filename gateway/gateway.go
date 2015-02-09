@@ -46,14 +46,14 @@ func setup() *G.GatewayConfig {
 	return nil
 }
 
-func initAggregating(gc *G.GatewayConfig, stopsig chan os.Signal) *G.AggGate {
-	ag := G.NewAggGate(gc, stopsig)
-	return ag
+func initAggregating(c *G.GatewayConfig, stopsig chan os.Signal) *G.AGateway {
+	a := G.NewAGateway(c, stopsig)
+	return a
 }
 
-func initTransparent(gc *G.GatewayConfig, stopsig chan os.Signal) *G.TransGate {
-	tg := G.NewTransGate(gc, stopsig)
-	return tg
+func initTransparent(c *G.GatewayConfig, stopsig chan os.Signal) *G.TGateway {
+	t := G.NewTGateway(c, stopsig)
+	return t
 }
 
 func registerSignals() chan os.Signal {

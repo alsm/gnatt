@@ -15,6 +15,18 @@ type PublishMessage struct {
 	Data        []byte
 }
 
+func NewPublishMessage(TopicId uint16, TopicIdType byte, Data []byte, Qos byte, MessageId uint16, Retain bool, Dup bool) *PublishMessage {
+	return &PublishMessage{
+		TopicId:     TopicId,
+		TopicIdType: TopicIdType,
+		Data:        Data,
+		Qos:         Qos,
+		MessageId:   MessageId,
+		Retain:      Retain,
+		Dup:         Dup,
+	}
+}
+
 func (p *PublishMessage) MessageType() byte {
 	return PUBLISH
 }

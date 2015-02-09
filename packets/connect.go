@@ -50,5 +50,6 @@ func (c *ConnectMessage) Unpack(b io.Reader) {
 	c.decodeFlags(readByte(b))
 	c.ProtocolId = readByte(b)
 	c.Duration = readUint16(b)
+	c.ClientId = make([]byte, c.Header.Length-6)
 	b.Read(c.ClientId)
 }

@@ -12,6 +12,15 @@ type SubackMessage struct {
 	MessageId  uint16
 }
 
+func NewSubackMessage(TopicId uint16, MessageId uint16, Qos byte, rc byte) *SubackMessage {
+	return &SubackMessage{
+		Qos:        Qos,
+		ReturnCode: rc,
+		TopicId:    TopicId,
+		MessageId:  MessageId,
+	}
+}
+
 func (s *SubackMessage) MessageType() byte {
 	return SUBACK
 }

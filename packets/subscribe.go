@@ -61,6 +61,7 @@ func (s *SubscribeMessage) Unpack(b io.Reader) {
 	s.MessageId = readUint16(b)
 	switch s.TopicIdType {
 	case 0x00, 0x02:
+		s.TopicName = make([]byte, s.Header.Length-5)
 		b.Read(s.TopicName)
 	case 0x01:
 		s.TopicId = readUint16(b)

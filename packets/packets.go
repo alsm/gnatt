@@ -1,3 +1,7 @@
+/*
+Package gnatt/packets provides de/serialisation of MQTTSN packets
+*/
+
 package packets
 
 import (

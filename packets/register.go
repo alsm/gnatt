@@ -11,6 +11,14 @@ type RegisterMessage struct {
 	TopicName []byte
 }
 
+func NewRegisterMessage(TopicId, MessageId uint16, TopicName []byte) *RegisterMessage {
+	return &RegisterMessage{
+		TopicId:   TopicId,
+		MessageId: MessageId,
+		TopicName: TopicName,
+	}
+}
+
 func (r *RegisterMessage) MessageType() byte {
 	return REGISTER
 }
@@ -30,5 +38,6 @@ func (r *RegisterMessage) Write(w io.Writer) error {
 func (r *RegisterMessage) Unpack(b io.Reader) {
 	r.TopicId = readUint16(b)
 	r.MessageId = readUint16(b)
+	r.TopicName = make([]byte, r.Header.Length-6)
 	b.Read(r.TopicName)
 }

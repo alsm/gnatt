@@ -11,6 +11,14 @@ type RegackMessage struct {
 	ReturnCode byte
 }
 
+func NewRegackMessage(TopicId uint16, MessageId uint16, rc byte) *RegackMessage {
+	return &RegackMessage{
+		TopicId:    TopicId,
+		MessageId:  MessageId,
+		ReturnCode: rc,
+	}
+}
+
 func (r *RegackMessage) MessageType() byte {
 	return REGACK
 }
