@@ -8,7 +8,7 @@ import (
 
 	. "github.com/alsm/gnatt/packets"
 
-	//MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
+	//MQTT "github.com/eclipse/paho.mqtt.golang"
 )
 
 type TGateway struct {

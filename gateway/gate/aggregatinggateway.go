@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
+	MQTT "github.com/eclipse/paho.mqtt.golang"
 
 	. "github.com/alsm/gnatt/packets"
 )
