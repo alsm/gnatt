@@ -5,7 +5,7 @@ import (
 	"net"
 	"sync"
 
-	. "eon.com/iotcore/services/mqtt-sn-gateway/libraries/gnatt/packets"
+	. "github.com/petrue/gnatt/packets"
 )
 
 type MessageHandler func(client *SNClient, message *PublishMessage)

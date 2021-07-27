@@ -1,7 +1,7 @@
 package gnatt
 
 import (
-	. "eon.com/iotcore/services/mqtt-sn-gateway/libraries/gnatt/packets"
+	. "github.com/petrue/gnatt/packets"
 )
 
 func (c *SNClient) receive() {
