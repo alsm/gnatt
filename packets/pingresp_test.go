@@ -1,9 +1,10 @@
 package packets
 
 import (
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPingrespStruct(t *testing.T) {

@@ -2,3 +2,4 @@
 */*.exe
 gateway/gateway
 *.cfg
+.DS_Store

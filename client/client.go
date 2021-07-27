@@ -2,10 +2,10 @@ package gnatt
 
 import (
 	"errors"
-	. "github.com/alsm/gnatt/packets"
 	"net"
-	"net/url"
 	"sync"
+
+	. "eon.com/iotcore/services/mqtt-sn-gateway/libraries/gnatt/packets"
 )
 
 type MessageHandler func(client *SNClient, message *PublishMessage)
@@ -46,19 +46,11 @@ type SNClient struct {
 	state                     byte
 }
 
-func NewClient(server string, clientid string) (*SNClient, error) {
+func NewClient(conn net.Conn, clientid string) (*SNClient, error) {
 	c := &SNClient{}
 	c.ClientId = clientid
-	serverURI, err := url.Parse(server)
-	if err != nil {
-		ERROR.Println(err.Error())
-		return nil, err
-	}
-	c.conn, err = net.Dial("udp", serverURI.Host)
-	if err != nil {
-		ERROR.Println(err.Error())
-		return nil, err
-	}
+
+	c.conn = conn
 	c.RegisteredTopics = make(map[string]uint16)
 	c.MessageHandlers = make(map[uint16]MessageHandler)
 	c.PredefinedTopics = make(map[string]uint16)

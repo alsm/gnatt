@@ -1,8 +1,9 @@
 package gnatt
 
 import (
-	. "github.com/alsm/gnatt/packets"
 	"time"
+
+	. "eon.com/iotcore/services/mqtt-sn-gateway/libraries/gnatt/packets"
 )
 
 type MessageAndToken struct {
